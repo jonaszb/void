@@ -5,7 +5,7 @@ defmodule VoidWeb.ThemeToggle do
 
   def theme_toggle(assigns) do
     ~H"""
-    <button phx-click={JS.toggle_class("dark", to: "html")}>Toggle</button>
+    <button phx-click={JS.dispatch("toggle-darkmode")} aria-label="Theme toggle">Toggle</button>
     """
   end
 end
