@@ -8,7 +8,7 @@ defmodule VoidWeb.DashboardLive do
 
   def render(assigns) do
     ~H"""
-    <h1>Hey <%= @current_user.email %></h1>
+    <h1>Hey <%= @current_user.username %></h1>
     """
   end
 end

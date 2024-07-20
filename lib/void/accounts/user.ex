@@ -8,6 +8,11 @@ defmodule Void.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :email_verified, :boolean
+    field :picture, :string
+    field :username, :string
+    field :profile, :string
+    field :sub, :integer
 
     timestamps(type: :utc_datetime)
   end
@@ -37,7 +42,7 @@ defmodule Void.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password])
+    |> cast(attrs, [:email, :password, :email_verified, :picture, :username, :profile, :sub])
     |> validate_email(opts)
     |> validate_password(opts)
   end

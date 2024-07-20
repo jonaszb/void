@@ -8,11 +8,32 @@ defmodule Void.Accounts do
 
   alias Void.Accounts.{User, UserToken, UserNotifier}
 
-  def get_user_by_email_or_register(email) when is_binary(email) do
+  def get_user_by_email_or_register(%{"email" => email} = user_data) when is_binary(email) do
+    IO.inspect(user_data)
+
     case Repo.get_by(User, email: email) do
       nil ->
         pw = :crypto.strong_rand_bytes(30) |> Base.encode64(padding: false)
-        {:ok, user} = register_user(%{email: email, password: pw})
+
+        %{
+          "sub" => sub,
+          "email_verified" => email_verified,
+          "picture" => picture,
+          "preferred_username" => username,
+          "profile" => profile
+        } = user_data
+
+        {:ok, user} =
+          register_user(%{
+            email: email,
+            password: pw,
+            sub: sub,
+            email_verified: email_verified,
+            username: username,
+            profile: profile,
+            picture: picture
+          })
+
         user
 
       user ->

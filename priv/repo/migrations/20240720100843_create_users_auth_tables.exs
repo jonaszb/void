@@ -8,6 +8,11 @@ defmodule Void.Repo.Migrations.CreateUsersAuthTables do
       add :email, :citext, null: false
       add :hashed_password, :string, null: false
       add :confirmed_at, :utc_datetime
+      add :email_verified, :boolean, null: false
+      add :picture, :string
+      add :username, :string, null: false
+      add :profile, :string
+      add :sub, :integer
 
       timestamps(type: :utc_datetime)
     end
