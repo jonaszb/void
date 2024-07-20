@@ -54,7 +54,10 @@ defmodule VoidWeb.GithubAuth do
         # Authorization succesful
         IO.inspect({user, token}, label: "user and token")
 
+        user_record = Void.Accounts.get_user_by_email_or_register(user)
+
         conn
+        |> VoidWeb.UserAuth.log_in_user(user_record)
         |> put_session(:github_user, user)
         |> put_session(:github_user_token, token)
         |> Phoenix.Controller.redirect(to: "/")
