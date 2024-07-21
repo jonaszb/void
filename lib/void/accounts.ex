@@ -30,6 +30,7 @@ defmodule Void.Accounts do
             sub: sub,
             email_verified: email_verified,
             username: username,
+            display_name: username,
             profile: profile,
             picture: picture
           })

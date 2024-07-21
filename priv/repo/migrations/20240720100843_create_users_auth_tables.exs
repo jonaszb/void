@@ -11,6 +11,7 @@ defmodule Void.Repo.Migrations.CreateUsersAuthTables do
       add :email_verified, :boolean, null: false
       add :picture, :string
       add :username, :string, null: false
+      add :display_name, :string
       add :profile, :string
       add :sub, :integer
 

@@ -11,6 +11,7 @@ defmodule Void.Accounts.User do
     field :email_verified, :boolean
     field :picture, :string
     field :username, :string
+    field :display_name, :string
     field :profile, :string
     field :sub, :integer
 

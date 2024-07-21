@@ -1,15 +1,42 @@
 <.flash_group flash={@flash} />
 
-<section class="text-center font-work">
+<section class="text-center font-work mx-auto max-w-2xl">
   <h1 class=" text-8xl text-blue-950 dark:text-[#cdebf8]">
     Real-time collaboration
   </h1>
-  <h2 class="text-4xl text-amber-950/60 my-4 dark:text-amber-50/60">
-    Void is a collaborative coding platform that empowers teams to <span class="dark:text-amber-50/75 text-amber-950/75 ">achieve more, together</span>.
+  <h2 class="text-4xl text-amber-950/60 my-4 dark:text-amber-50/60 bg-clip-text bg-gradient-to-b dark:from-amber-50/10 dark:to-amber-50/50 from-amber-950/10 to-amber-950/60">
+    Void is a collaborative coding platform that empowers teams to achieve more, together.
   </h2>
-  <button class="bg-[#DEA01E] px-12 py-6 mt-2 rounded-lg border-none dark:text-gray-800 text-gray-50 text-xl font-bold hover:px-14 transition-all hover:brightness-105">
+  <.link class="bg-[#DEA01E] px-12 py-6 my-6 rounded-lg border-none inline-block dark:text-gray-800 text-gray-50 text-xl font-bold hover:px-14 transition-all hover:brightness-105 shadow">
     Sign in to get started
-  </button>
+  </.link>
+</section>
+<section class="mx-auto max-w-5xl flex mt-14 items-center">
+  <div class="z-10 translate-x-4 -translate-y-4">
+    <figure class="md:flex bg-amber-50 rounded-xl p-8 md:p-0 dark:bg-gray-900 shadow-md overflow-hidden min-w-[640px]">
+      <img
+        class="w-24 h-24 md:w-48 md:h-auto aspect-square md:rounded-none rounded-full mx-auto"
+        src="/images/bgates.jpg"
+        alt=""
+      />
+      <div class="pt-6 md:p-8 text-center md:text-left space-y-4">
+        <blockquote>
+          <p class="text-lg font-medium text-blue-950 dark:text-blue-100">
+            “Void is the only reason Microsoft remains relevant in today's competitive market!”
+          </p>
+        </blockquote>
+        <figcaption class="font-medium">
+          <div class="text-amber-600 dark:text-amber-400">
+            Bill Gates
+          </div>
+          <div class="text-slate-700 dark:text-slate-500">
+            Co-founder, Microsoft
+          </div>
+        </figcaption>
+      </div>
+    </figure>
+  </div>
+  <div class="min-w-[30rem] bg-slate-400 h-[32rem] -translate-x-4 z-0 right-0" />
 </section>
 
 <%!-- <div class="left-[40rem] fixed inset-y-0 right-0 z-0 hidden lg:block xl:left-[50rem]">
