@@ -43,7 +43,16 @@ defmodule Void.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password, :email_verified, :picture, :username, :profile, :sub])
+    |> cast(attrs, [
+      :email,
+      :password,
+      :email_verified,
+      :picture,
+      :display_name,
+      :username,
+      :profile,
+      :sub
+    ])
     |> validate_email(opts)
     |> validate_password(opts)
   end

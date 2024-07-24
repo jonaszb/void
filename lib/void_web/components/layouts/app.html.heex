@@ -20,7 +20,7 @@
             alt="User profile picture"
             class="w-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5"
           />
-          <span class="dark:text-blue-50 text-gray-700"><%= @current_user.username %></span>
+          <span class="dark:text-blue-50 text-gray-700"><%= @current_user.display_name %></span>
         </button>
         <.link
           href={~p"/users/log_out"}
@@ -58,7 +58,12 @@
   <%= @inner_content %>
 </main>
 <%= if @current_user do %>
-  <.modal id="user-config">
-    <.live_component id="user-config-live" module={VoidWeb.UserConfigLive} user={@current_user} />
+  <.modal id="user-config" show>
+    <.live_component
+      id="user-config-live"
+      module={VoidWeb.UserConfigLive}
+      user={@current_user}
+      modal_id="user-config"
+    />
   </.modal>
 <% end %>
