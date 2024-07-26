@@ -382,8 +382,8 @@ defmodule VoidWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+          "mt-2 block w-full rounded-lg text-gray-900 focus:ring-0 sm:text-sm sm:leading-6 disabled:bg-gray-100 dark:text-gray-50 dark:disabled:text-gray-300 dark:bg-gray-900 dark:disabled:bg-gray-800",
+          "phx-no-feedback:border-zinc-300 dark:phx-no-feedback:border-gray-600 phx-no-feedback:focus:border-blue-400",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
@@ -402,7 +402,7 @@ defmodule VoidWeb.CoreComponents do
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
+    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800 dark:text-gray-300">
       <%= render_slot(@inner_block) %>
     </label>
     """

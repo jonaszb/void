@@ -1,11 +1,15 @@
 defmodule VoidWeb.Logos do
   use Phoenix.Component
 
-  attr :class, :string, required: false, default: "dark:fill-[#cdebf8] fill-[#0d455d]"
+  attr :class, :string, required: false, default: ""
 
   def logo_full(assigns) do
     ~H"""
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240.78 102.453" class={@class || ""}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 240.78 102.453"
+      class={["dark:fill-[#cdebf8] fill-[#0d455d]", @class || ""]}
+    >
       <g>
         <path
           xmlns="http://www.w3.org/2000/svg"

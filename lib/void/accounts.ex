@@ -222,6 +222,19 @@ defmodule Void.Accounts do
   end
 
   @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user display name.
+
+  ## Examples
+
+      iex> change_user_password(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_display_name(user, attrs \\ %{}) do
+    User.display_name_changeset(user, attrs)
+  end
+
+  @doc """
   Updates the user password.
 
   ## Examples
@@ -242,6 +255,18 @@ defmodule Void.Accounts do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
     |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{user: user}} -> {:ok, user}
+      {:error, :user, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  def update_user_display_name(user, _display_name, attrs) do
+    changeset = user |> User.display_name_changeset(attrs)
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:user, changeset)
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}

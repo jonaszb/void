@@ -1,38 +1,40 @@
-<header class="px-4 sm:px-6 lg:px-8 fixed w-full">
-  <div class="flex items-center justify-between border-gray-500 py-3 text-sm">
-    <div class="flex items-center gap-4">
-      <a href="/" class="w-36">
+<header class="px-4 sm:px-6 lg:px-8 fixed w-full z-50 dark:bg-gray-800/80 bg-blue-50/80 border-b border-gray-600 backdrop-blur-sm md:backdrop-blur-md">
+  <div class="flex items-center justify-between border-gray-500 py-4 text-sm">
+    <div class="flex items-center gap-4 z-50">
+      <a href="/" class="sm:w-36 w-24" aria-label="Home">
         <.logo_full />
       </a>
     </div>
-    <div class="flex items-center gap-4 font-semibold leading-6">
+    <div class="flex items-center gap-1 md:gap-4 font-semibold leading-6 z-50">
       <%!-- <a href="https://github.com/phoenixframework/phoenix" class="hover:text-zinc-700">
         GitHub
       </a> --%>
-      <.theme_toggle />
+      <.theme_toggle class="w-8" />
       <%= if @current_user do %>
         <button
           phx-click={show_modal("user-config")}
-          class="flex ml-6 gap-2 items-center cursor-pointer"
+          class="flex mx-2 sm:ml-4 gap-2 items-center cursor-pointer"
         >
           <img
             src={@current_user.picture}
             alt="User profile picture"
             class="w-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5"
           />
-          <span class="dark:text-blue-50 text-gray-700"><%= @current_user.display_name %></span>
+          <span class="dark:text-blue-50 text-gray-700 hidden sm:block">
+            <%= @current_user.display_name %>
+          </span>
         </button>
         <.link
           href={~p"/users/log_out"}
           method="delete"
-          class="rounded-md dark:bg-blue-50 dark:hover:bg-blue-100 px-2 py-1 hover:bg-transparent bg-transparent text-gray-800 dark:border-transparent border border-gray-700"
+          class="rounded-md bg-blue-50 hover:bg-blue-100 px-2 py-1 text-gray-800 dark:border-transparent border border-gray-700"
         >
           Sign out
         </.link>
       <% else %>
         <.link
           href={~p"/auth/github"}
-          class="flex gap-2 rounded-md dark:bg-blue-50 dark:hover:bg-blue-100 px-2 py-1 hover:bg-transparent bg-transparent text-gray-800 dark:border-transparent border border-gray-700"
+          class="flex gap-2 rounded-md bg-blue-50 hover:bg-blue-100 px-2 py-1 text-gray-800 dark:border-transparent border border-gray-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -51,19 +53,16 @@
       <% end %>
     </div>
   </div>
-  <div class="absolute left-0 top-0 w-screen h-full dark:bg-slate-800 bg-blue-50 -z-10 gradient-blur hidden lg:block" />
 </header>
 <main class="px-4 pb-20 pt-40 sm:px-6 lg:px-8">
   <.flash_group flash={@flash} />
   <%= @inner_content %>
+  <%= if @current_user do %>
+    <.modal id="user-config">
+      <%= live_render(@socket, VoidWeb.UserConfigLive,
+        id: "user-config-live",
+        session: %{"user" => @current_user}
+      ) %>
+    </.modal>
+  <% end %>
 </main>
-<%= if @current_user do %>
-  <.modal id="user-config" show>
-    <.live_component
-      id="user-config-live"
-      module={VoidWeb.UserConfigLive}
-      user={@current_user}
-      modal_id="user-config"
-    />
-  </.modal>
-<% end %>

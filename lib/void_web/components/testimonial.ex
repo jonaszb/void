@@ -10,9 +10,13 @@ defmodule VoidWeb.Testimonial do
   def testimonial(assigns) do
     ~H"""
     <div {@rest}>
-      <figure class="md:flex bg-amber-50 rounded-xl p-8 md:p-0 dark:bg-gray-900 shadow-md overflow-hidden min-w-[640px]">
-        <div class="w-48 min-w-48">
-          <img class="w-full object-cover h-48 overflow-hidden" src={@img} alt="" />
+      <figure class="flex md:flex-row flex-col bg-amber-50 rounded-xl p-4 md:p-0 dark:bg-gray-900 shadow-lg overflow-hidden md:min-w-[640px] items-center">
+        <div class="w-48 min-w-48 flex items-center justify-center">
+          <img
+            class="rounded-full md:rounded-none w-full object-cover h-48 overflow-hidden"
+            src={@img}
+            alt=""
+          />
         </div>
         <div class="pt-6 md:p-8 text-center md:text-left space-y-4">
           <blockquote>

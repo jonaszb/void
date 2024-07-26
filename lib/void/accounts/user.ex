@@ -138,6 +138,17 @@ defmodule Void.Accounts.User do
   end
 
   @doc """
+    A user changeset for changing the display name.
+  """
+  def display_name_changeset(user, attrs, _opts \\ []) do
+    user
+    |> cast(attrs, [:display_name])
+
+    # |> validate_confirmation(:password, message: "does not match password")
+    # |> validate_password(opts)
+  end
+
+  @doc """
   Confirms the account by setting `confirmed_at`.
   """
   def confirm_changeset(user) do
