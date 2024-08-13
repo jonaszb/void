@@ -6,4 +6,8 @@ defmodule VoidWeb.PageController do
     # so skip the default app layout.
     render(conn, :home)
   end
+
+  def not_found(conn, _params) do
+    render(conn, :not_found, layout: false)
+  end
 end

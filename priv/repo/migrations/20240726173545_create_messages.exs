@@ -4,7 +4,7 @@ defmodule Void.Repo.Migrations.CreateMessages do
   def change do
     create table(:messages) do
       add :content, :text
-      add :room_id, references(:rooms, on_delete: :nothing, column: :uuid, type: :binary_id)
+      add :room_id, references(:rooms, on_delete: :delete_all, column: :room_id, type: :binary_id)
       add :user_id, references(:users, on_delete: :nothing)
 
       timestamps(type: :utc_datetime)

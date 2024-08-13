@@ -8,7 +8,7 @@ defmodule Void.Repo.Migrations.CreateRoomStates do
       add :language, :string
       add :formatter, :string
       add :contents, :text
-      add :room_id, references(:rooms, on_delete: :nothing, column: :uuid, type: :binary_id)
+      add :room_id, references(:rooms, on_delete: :delete_all, column: :room_id, type: :binary_id)
 
       timestamps(type: :utc_datetime)
     end

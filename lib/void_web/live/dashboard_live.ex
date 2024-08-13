@@ -18,10 +18,7 @@ defmodule VoidWeb.DashboardLive do
       <section class="bg-blue-100/50 dark:bg-gray-900/50 border rounded-lg border-gray-200 dark:border-gray-700">
         <header class="px-4 py-6 transparent text-xl flex items-center justify-between gap-4 border-b dark:border-gray-700">
           <h2 class="text-blue-950/80 text-xl font-bold dark:text-blue-300/80">My rooms</h2>
-          <button
-            phx-click="new_room"
-            class="bg-amber-500 px-4 py-2 rounded-lg uppercase font-bold text-sm text-white flex items-center hover:brightness-105 transition-all"
-          >
+          <button phx-click="new_room" class="btn-primary">
             <span class="hidden sm:inline-block">New Room</span>
             <.icon name="hero-plus-solid" class="h-6 w-6 sm:ml-2" />
           </button>
@@ -37,11 +34,16 @@ defmodule VoidWeb.DashboardLive do
             <ul class="grid gap-x-8 gap-y-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 text-black/75 dark:text-blue-100/75">
               <%= for room <- @rooms do %>
                 <li class="p-4 rounded cursor-pointer bg-blue-300/20 dark:bg-blue-100/20 shadow-md backdrop-blur-sm border border-gray-300/20 hover:scale-105 hover:backdrop-brightness-125 transition-all">
-                  <.link navigate={~p"/rooms/#{room.uuid}"} class="flex flex-col items-center">
-                    <header><%= room.name %></header>
-                    <.icon name="hero-code-bracket-solid" class="h-12 w-12 my-6 text-amber-500/75" />
-                    <p>Last updated:</p>
-                    <time><%= relative_time_ago(room.updated_at) %></time>
+                  <.link
+                    navigate={~p"/rooms/#{room.room_id}"}
+                    class="flex flex-col items-center h-full justify-between"
+                  >
+                    <header class="font-bold text-center"><%= room.name %></header>
+                    <div class="flex flex-col items-center">
+                      <.icon name="hero-code-bracket-solid" class="h-12 w-12 my-6 text-amber-500/75" />
+                      <p>Last updated:</p>
+                      <time><%= relative_time_ago(room.updated_at) %></time>
+                    </div>
                   </.link>
                 </li>
               <% end %>
@@ -57,7 +59,7 @@ defmodule VoidWeb.DashboardLive do
     # socket = put_flash(socket, :error, "Cannot create more rooms");
     socket =
       case create_room_for_user(socket.assigns.current_user) do
-        {:ok, %{room: room}} -> LiveView.push_navigate(socket, to: ~p"/rooms/#{room.uuid}")
+        {:ok, %{room: room}} -> LiveView.push_navigate(socket, to: ~p"/rooms/#{room.room_id}")
         {:error, _} -> put_flash(socket, :error, "Failed to create room")
       end
 

@@ -1,10 +1,11 @@
 defmodule Void.Rooms.RoomUser do
   use Ecto.Schema
   import Ecto.Changeset
+  @foreign_key_type :binary_id
 
   schema "room_users" do
     field :role, :string
-    field :room_id, Ecto.UUID
+    belongs_to :room, Void.Rooms.Room, type: :binary_id
     field :user_id, :id
 
     timestamps(type: :utc_datetime)

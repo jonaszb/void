@@ -6,7 +6,7 @@ defmodule Void.Repo.Migrations.CreateRoomUsers do
       add :role, :string
 
       add :room_id,
-          references(:rooms, on_delete: :nothing, type: :binary_id, column: :uuid)
+          references(:rooms, on_delete: :delete_all, type: :binary_id, column: :room_id)
 
       add :user_id, references(:users, on_delete: :nothing)
 

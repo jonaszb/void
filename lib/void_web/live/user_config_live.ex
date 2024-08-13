@@ -6,12 +6,17 @@ defmodule VoidWeb.UserConfigLive do
   use Phoenix.LiveView
 
   @impl true
-  def mount(_params, %{"user" => user}, socket) do
+  def mount(_params, %{"user" => user, "redirect_to" => redirect_to}, socket) do
     name_changeset = Accounts.change_user_display_name(user)
 
     socket =
       socket
-      |> assign(trigger_submit: false, name_form: to_form(name_changeset), user: user)
+      |> assign(
+        trigger_submit: false,
+        name_form: to_form(name_changeset),
+        user: user,
+        redirect_to: redirect_to
+      )
 
     {:ok, socket}
   end
@@ -68,7 +73,7 @@ defmodule VoidWeb.UserConfigLive do
          socket
          #  |> put_flash(:info, info)
          |> assign(user: applied_user)
-         |> push_navigate(to: "/dashboard")}
+         |> push_navigate(to: socket.assigns.redirect_to || "/")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :name_form, to_form(Map.put(changeset, :action, :insert)))}

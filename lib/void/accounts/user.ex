@@ -143,6 +143,7 @@ defmodule Void.Accounts.User do
   def display_name_changeset(user, attrs, _opts \\ []) do
     user
     |> cast(attrs, [:display_name])
+    |> validate_length(:display_name, max: 30)
 
     # |> validate_confirmation(:password, message: "does not match password")
     # |> validate_password(opts)

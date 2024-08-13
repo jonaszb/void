@@ -1,6 +1,7 @@
 defmodule Void.Rooms.RoomState do
   use Ecto.Schema
   import Ecto.Changeset
+  @foreign_key_type :binary_id
 
   schema "room_states" do
     field :name, :string
@@ -8,7 +9,7 @@ defmodule Void.Rooms.RoomState do
     field :formatter, :string
     field :language, :string
     field :contents, :string
-    field :room_id, Ecto.UUID
+    belongs_to :room, Void.Rooms.Room, type: :binary_id
 
     timestamps(type: :utc_datetime)
   end

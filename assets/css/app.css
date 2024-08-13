@@ -9,3 +9,7 @@
     -webkit-mask-image: linear-gradient(to bottom, black 5%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 5%, transparent 100%);
 }
+
+.btn-primary {
+    @apply bg-amber-500 px-4 py-2 rounded-lg uppercase font-bold text-sm text-white flex items-center hover:brightness-105 transition-all;
+}

@@ -61,7 +61,7 @@
     <.modal id="user-config">
       <%= live_render(@socket, VoidWeb.UserConfigLive,
         id: "user-config-live",
-        session: %{"user" => @current_user}
+        session: %{"user" => @current_user, "redirect_to" => ~p"/dashboard"}
       ) %>
     </.modal>
   <% end %>

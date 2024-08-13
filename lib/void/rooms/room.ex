@@ -1,11 +1,13 @@
 defmodule Void.Rooms.Room do
   use Ecto.Schema
   import Ecto.Changeset
-  @primary_key {:uuid, :binary_id, autogenerate: false}
+  @primary_key {:room_id, :binary_id, autogenerate: false}
 
   schema "rooms" do
     field :name, :string
     field :owner_id, :id
+    has_many :room_users, Void.Rooms.RoomUser, foreign_key: :room_id, on_delete: :delete_all
+    has_many :room_states, Void.Rooms.RoomState, foreign_key: :room_id, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end
@@ -13,7 +15,7 @@ defmodule Void.Rooms.Room do
   @doc false
   def changeset(room, attrs) do
     room
-    |> cast(attrs, [:name, :uuid, :owner_id])
-    |> validate_required([:name, :uuid, :owner_id])
+    |> cast(attrs, [:name, :room_id, :owner_id])
+    |> validate_required([:name, :room_id, :owner_id])
   end
 end
