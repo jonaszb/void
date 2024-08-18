@@ -18,10 +18,15 @@ defmodule VoidWeb.DashboardLive do
       <section class="bg-blue-100/50 dark:bg-gray-900/50 border rounded-lg border-gray-200 dark:border-gray-700">
         <header class="px-4 py-6 transparent text-xl flex items-center justify-between gap-4 border-b dark:border-gray-700">
           <h2 class="text-blue-950/80 text-xl font-bold dark:text-blue-300/80">My rooms</h2>
-          <button phx-click="new_room" class="btn-primary">
-            <span class="hidden sm:inline-block">New Room</span>
-            <.icon name="hero-plus-solid" class="h-6 w-6 sm:ml-2" />
-          </button>
+          <span class="flex items-center gap-4">
+            <span class="text-sm font-light text-black/75 dark:text-white/80 tracking-wide">
+              <%= length(@rooms) %> / 10
+            </span>
+            <button phx-click="new_room" class="btn-primary">
+              <span class="hidden sm:inline-block">New Room</span>
+              <.icon name="hero-plus-solid" class="h-6 w-6 sm:ml-2" />
+            </button>
+          </span>
         </header>
         <div class="py-8 px-6 items-center justify-center h-[min(32rem,60vh)] bg-[url('/images/luminary.svg')] bg-cover bg-no-repeat overflow-scroll">
           <%= if @rooms == [] do %>
@@ -60,6 +65,7 @@ defmodule VoidWeb.DashboardLive do
     socket =
       case create_room_for_user(socket.assigns.current_user) do
         {:ok, %{room: room}} -> LiveView.push_navigate(socket, to: ~p"/rooms/#{room.room_id}")
+        {:limit, message} -> put_flash(socket, :info, message)
         {:error, _} -> put_flash(socket, :error, "Failed to create room")
       end
 

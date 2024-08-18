@@ -6,6 +6,7 @@ defmodule Void.Rooms do
   alias Void.Repo
   alias Void.Rooms.Room
   alias Void.Accounts.User
+  @default_room_cap 10
 
   def list_rooms_for_user(user_id) do
     Repo.all(from r in Room, where: r.owner_id == ^user_id, order_by: [desc: r.updated_at])
@@ -56,19 +57,27 @@ defmodule Void.Rooms do
     end
   end
 
+  def get_room_count_for_user(user) do
+    query = from r in Room, where: r.owner_id == ^user.id
+    Repo.aggregate(query, :count)
+  end
+
   def create_room_for_user(user) do
-    room_name = Void.Slugs.generate()
+    if get_room_count_for_user(user) >= @default_room_cap do
+      {:limit, "You can have a maximum of #{@default_room_cap} rooms"}
+    else
+      room_name = Void.Slugs.generate()
+      room_id = Ecto.UUID.generate()
 
-    room_id = Ecto.UUID.generate()
+      room_attrs = %{name: room_name, owner_id: user.id, room_id: room_id}
+      room_state_attrs = %{content: "", name: "New Room", room_id: room_id}
+      room_user_attrs = %{role: "O", room_id: room_id, user_id: user.id, name: room_name}
 
-    room_attrs = %{name: room_name, owner_id: user.id, room_id: room_id}
-    room_state_attrs = %{content: "", name: "New Room", room_id: room_id}
-    room_user_attrs = %{role: "O", room_id: room_id, user_id: user.id, name: room_name}
-
-    Multi.new()
-    |> Multi.insert(:room, Room.changeset(%Room{}, room_attrs))
-    |> Multi.insert(:room_state, RoomState.changeset(%RoomState{}, room_state_attrs))
-    |> Multi.insert(:room_user, RoomUser.changeset(%RoomUser{}, room_user_attrs))
-    |> Repo.transaction()
+      Multi.new()
+      |> Multi.insert(:room, Room.changeset(%Room{}, room_attrs))
+      |> Multi.insert(:room_state, RoomState.changeset(%RoomState{}, room_state_attrs))
+      |> Multi.insert(:room_user, RoomUser.changeset(%RoomUser{}, room_user_attrs))
+      |> Repo.transaction()
+    end
   end
 end
