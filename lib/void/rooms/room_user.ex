@@ -4,9 +4,14 @@ defmodule Void.Rooms.RoomUser do
   @foreign_key_type :binary_id
 
   schema "room_users" do
-    field :role, :string
     belongs_to :room, Void.Rooms.Room, type: :binary_id
-    field :user_id, :id
+    field :user_id, :binary_id
+    field :has_access, :boolean
+    field :is_owner, :boolean
+    field :is_editor, :boolean
+    field :is_guest, :boolean
+    field :display_name, :string
+    field :expires_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -14,7 +19,16 @@ defmodule Void.Rooms.RoomUser do
   @doc false
   def changeset(room_user, attrs) do
     room_user
-    |> cast(attrs, [:role, :room_id, :user_id])
-    |> validate_required([:role, :room_id, :user_id])
+    |> cast(attrs, [
+      :has_access,
+      :room_id,
+      :user_id,
+      :is_owner,
+      :is_editor,
+      :is_guest,
+      :expires_at,
+      :display_name
+    ])
+    |> validate_required([:has_access, :room_id, :user_id, :is_owner, :is_editor])
   end
 end

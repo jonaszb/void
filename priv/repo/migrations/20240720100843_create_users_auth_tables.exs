@@ -5,7 +5,8 @@ defmodule Void.Repo.Migrations.CreateUsersAuthTables do
     execute "CREATE EXTENSION IF NOT EXISTS citext", ""
 
     create table(:users) do
-      add :email, :citext, null: false
+      add :email, :citext
+      add :uuid, :binary_id
       add :hashed_password, :string, null: false
       add :confirmed_at, :utc_datetime
       add :email_verified, :boolean, null: false
@@ -14,11 +15,12 @@ defmodule Void.Repo.Migrations.CreateUsersAuthTables do
       add :display_name, :string
       add :profile, :string
       add :sub, :integer
+      add :is_guest, :boolean, null: false
 
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:users, [:email])
+    create unique_index(:users, [:uuid])
 
     create table(:users_tokens) do
       add :user_id, references(:users, on_delete: :delete_all), null: false

@@ -4,7 +4,11 @@ defmodule VoidWeb.LobbyLive do
   alias Void.Rooms
   alias Void.Accounts
 
-  def mount(%{"room" => room_uuid}, _session, %{assigns: %{current_user: nil}} = socket) do
+  def mount(
+        %{"room" => room_uuid},
+        %{"user_token" => user_token},
+        %{assigns: %{current_user: nil}} = socket
+      ) do
     name_placeholder = "#{Faker.Person.first_name()} #{Faker.Person.last_name()}"
 
     socket =
@@ -12,6 +16,7 @@ defmodule VoidWeb.LobbyLive do
         name_form = to_form(Accounts.change_user_display_name(%User{}))
 
         assign(socket,
+          guest_uuid: user_token,
           room_uuid: room_uuid,
           name_form: name_form
         )
@@ -53,9 +58,13 @@ defmodule VoidWeb.LobbyLive do
           for={@name_form}
           class="grid gap-4 w-full sm:w-[32rem] sm:grid-cols-[1fr_max-content] sm:items-baseline auto-cols-fr"
           phx-change="validate_display_name"
+          phx-submit="request_access"
         >
           <.input field={@name_form[:display_name]} placeholder={@name_placeholder} />
-          <button class="btn-primary sm:w-fit justify-center" type="button">
+          <button
+            class="btn-primary sm:w-fit justify-center"
+            disabled={@name_form.action !== :validate || @name_form.errors !== []}
+          >
             Request access <.icon name="hero-lock-open-mini" class="ml-2 h-4" />
           </button>
         </.form>
@@ -73,7 +82,7 @@ defmodule VoidWeb.LobbyLive do
             <%= @current_user.display_name %>
           </span>
         </button>
-        <button class="btn-primary sm:w-fit justify-center" type="button">
+        <button class="btn-primary sm:w-fit justify-center" type="button" phx-click="request_access">
           Request access <.icon name="hero-lock-open-mini" class="ml-2 h-4" />
         </button>
       <% end %>
@@ -119,5 +128,15 @@ defmodule VoidWeb.LobbyLive do
       |> to_form()
 
     {:noreply, assign(socket, name_form: name_form)}
+  end
+
+  def handle_event("request_access", %{"user" => %{"display_name" => display_name}}, socket) do
+    Accounts.get_guest_user_or_register(%User{
+      display_name: display_name,
+      uuid: socket.assigns.guest_uuid
+    })
+    |> Rooms.request_room_access(socket.assigns.room_uuid, display_name)
+
+    {:noreply, socket}
   end
 end

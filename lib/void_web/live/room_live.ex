@@ -18,7 +18,14 @@ defmodule VoidWeb.RoomLive do
       case Rooms.user_can_access_room(current_user, room_uuid) do
         {:ok, true} ->
           {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
-          assign(socket, room: room, owner_name: owner_name)
+          room_users = Rooms.get_room_users(room)
+          IO.inspect(room_users)
+
+          assign(socket,
+            room: room,
+            owner_name: owner_name,
+            room_users: room_users
+          )
 
         _ ->
           push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
@@ -37,6 +44,17 @@ defmodule VoidWeb.RoomLive do
     <.theme_toggle class="" />
     <h1><%= "Hello from #{@room.name} owned by #{@owner_name}" %></h1>
     <button phx-click="delete">DELETE ROOM</button>
+    <ul>
+      <%= for user <- @room_users do %>
+        <li class="flex">
+          <span><%= user.display_name %></span>
+          <span><%= user.id %></span>
+          <span :if={user.is_guest}>(Guest)</span>
+          <span :if={not user.has_access}> -- awaiting access --</span>
+          <button :if={not user.has_access} class="btn-primary">GRANT ACCESS</button>
+        </li>
+      <% end %>
+    </ul>
     """
   end
 

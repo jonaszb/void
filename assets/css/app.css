@@ -11,5 +11,5 @@
 }
 
 .btn-primary {
-    @apply bg-amber-500 px-4 py-2 rounded-lg uppercase font-bold text-sm text-white flex items-center hover:brightness-105 transition-all;
+    @apply bg-amber-500 px-4 py-2 rounded-lg uppercase font-bold text-sm text-white flex items-center enabled:hover:brightness-105 transition-all disabled:bg-zinc-400;
 }

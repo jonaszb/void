@@ -23,6 +23,13 @@ defmodule Void.Rooms do
     Repo.one(query)
   end
 
+  def get_room_users(room) do
+    query =
+      from ru in RoomUser, where: ru.room_id == ^room.room_id, order_by: [desc: ru.has_access]
+
+    Repo.all(query)
+  end
+
   def delete_room(room) do
     Repo.delete(room)
   end
@@ -45,7 +52,7 @@ defmodule Void.Rooms do
 
   def user_can_access_room(user, room_uuid) do
     if room_exists?(room_uuid) do
-      query = from ru in RoomUser, where: ru.room_id == ^room_uuid and ru.user_id == ^user.id
+      query = from ru in RoomUser, where: ru.room_id == ^room_uuid and ru.user_id == ^user.uuid
 
       case Repo.aggregate(query, :count) do
         0 -> {:ok, false}
@@ -71,7 +78,17 @@ defmodule Void.Rooms do
 
       room_attrs = %{name: room_name, owner_id: user.id, room_id: room_id}
       room_state_attrs = %{content: "", name: "New Room", room_id: room_id}
-      room_user_attrs = %{role: "O", room_id: room_id, user_id: user.id, name: room_name}
+
+      room_user_attrs = %{
+        has_access: true,
+        is_owner: true,
+        is_editor: true,
+        is_guest: false,
+        display_name: user.display_name,
+        room_id: room_id,
+        user_id: user.uuid,
+        name: room_name
+      }
 
       Multi.new()
       |> Multi.insert(:room, Room.changeset(%Room{}, room_attrs))
@@ -79,5 +96,19 @@ defmodule Void.Rooms do
       |> Multi.insert(:room_user, RoomUser.changeset(%RoomUser{}, room_user_attrs))
       |> Repo.transaction()
     end
+  end
+
+  def request_room_access(user, room_id, display_name) do
+    room_user_attrs = %{
+      has_access: false,
+      is_owner: false,
+      is_editor: false,
+      is_guest: user.is_guest,
+      room_id: room_id,
+      user_id: user.uuid,
+      display_name: display_name
+    }
+
+    Repo.insert(RoomUser.changeset(%RoomUser{}, room_user_attrs))
   end
 end

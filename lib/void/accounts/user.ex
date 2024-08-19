@@ -4,6 +4,8 @@ defmodule Void.Accounts.User do
 
   schema "users" do
     field :email, :string
+    field :uuid, :binary_id
+    field :is_guest, :boolean
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
@@ -44,6 +46,7 @@ defmodule Void.Accounts.User do
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [
+      :uuid,
       :email,
       :password,
       :email_verified,
@@ -53,8 +56,10 @@ defmodule Void.Accounts.User do
       :profile,
       :sub
     ])
-    |> validate_email(opts)
+    # |> validate_email(opts)
     |> validate_password(opts)
+    |> maybe_generate_uuid()
+    |> set_is_guest()
   end
 
   defp validate_email(changeset, opts) do
@@ -103,6 +108,23 @@ defmodule Void.Accounts.User do
     end
   end
 
+  defp maybe_generate_uuid(changeset) do
+    if get_field(changeset, :uuid) == nil do
+      uuid = Ecto.UUID.generate()
+      put_change(changeset, :uuid, uuid)
+    else
+      changeset
+    end
+  end
+
+  defp set_is_guest(changeset) do
+    if get_field(changeset, :email) == nil do
+      put_change(changeset, :is_guest, true)
+    else
+      put_change(changeset, :is_guest, false)
+    end
+  end
+
   @doc """
   A user changeset for changing the email.
 
@@ -143,6 +165,7 @@ defmodule Void.Accounts.User do
   def display_name_changeset(user, attrs, _opts \\ []) do
     user
     |> cast(attrs, [:display_name])
+    |> validate_required([:display_name])
     |> validate_length(:display_name, max: 30)
 
     # |> validate_confirmation(:password, message: "does not match password")

@@ -40,6 +40,31 @@ defmodule Void.Accounts do
     end
   end
 
+  def get_guest_user_or_register(%{uuid: uuid, display_name: username})
+      when is_binary(uuid) do
+    case Repo.get_by(User, uuid: uuid) do
+      nil ->
+        pw = :crypto.strong_rand_bytes(30) |> Base.encode64(padding: false)
+
+        {:ok, user} =
+          register_user(%{
+            uuid: uuid,
+            password: pw,
+            email_verified: false,
+            username: "guest",
+            display_name: username
+          })
+
+        user
+
+      user ->
+        case user.is_guest do
+          true -> user
+          false -> :error
+        end
+    end
+  end
+
   ## Database getters
 
   @doc """
