@@ -21,7 +21,7 @@ defmodule VoidWeb.RoomLive do
           {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
           room_users = Rooms.get_room_users(room)
           room_state = RoomStates.get_room_state(room_uuid)
-
+          this_room_user = Enum.find(room_users, fn u -> u.user_id == user_token end)
           presences = track_presence(room_uuid, user_token)
           Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
 
@@ -29,9 +29,9 @@ defmodule VoidWeb.RoomLive do
 
           assign(socket,
             room: room,
-            is_owner: false,
             owner_name: owner_name,
             room_users: room_users,
+            room_user: this_room_user,
             room_state: room_state,
             room_state_form: to_form(RoomState.changeset(room_state, %{})),
             presences: presences
@@ -54,6 +54,7 @@ defmodule VoidWeb.RoomLive do
           {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
           room_users = Rooms.get_room_users(room)
           room_state = RoomStates.get_room_state(room_uuid)
+          this_room_user = Enum.find(room_users, fn u -> u.user_id == current_user.uuid end)
 
           presences = track_presence(room_uuid, current_user)
           Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
@@ -68,9 +69,9 @@ defmodule VoidWeb.RoomLive do
 
           assign(socket,
             room: room,
-            is_owner: is_owner,
             owner_name: owner_name,
             room_users: room_users,
+            room_user: this_room_user,
             room_state: room_state,
             room_state_form: to_form(RoomState.changeset(room_state, %{})),
             presences: presences
@@ -111,8 +112,8 @@ defmodule VoidWeb.RoomLive do
     </script>
     <.theme_toggle class="" />
     <h1><%= "Hello from #{@room.name} owned by #{@owner_name}" %></h1>
-    <button :if={@is_owner} phx-click="delete">DELETE ROOM</button>
-    <ul :if={@is_owner}>
+    <button :if={@room_user.is_owner} phx-click="delete">DELETE ROOM</button>
+    <ul :if={@room_user.is_owner}>
       <%= for user <- @room_users do %>
         <li class="flex gap-4">
           <span><%= user.display_name %></span>
@@ -147,9 +148,20 @@ defmodule VoidWeb.RoomLive do
         </li>
       <% end %>
     </ul>
-    <.form for={@room_state_form} id="room-content-form" phx-change="update_room_state">
+    <%!-- <.form for={@room_state_form} id="room-content-form" phx-change="update_room_state">
       <.input field={@room_state_form[:contents]} />
-    </.form>
+    </.form> --%>
+    <div id="editor-container" phx-update="ignore">
+      <div
+        class="min-h-56"
+        id="editor"
+        phx-hook="MonacoEditor"
+        data-content={@room_state.contents}
+        data-uuid={@room.room_id}
+        data-read-only={"#{@room_user.is_editor == false}"}
+      >
+      </div>
+    </div>
     """
   end
 
@@ -175,16 +187,17 @@ defmodule VoidWeb.RoomLive do
   end
 
   def handle_event("update_room_state", %{"room_state" => updated_room_state}, socket) do
-    IO.inspect(RoomStates.update_room_state(socket.assigns.room_state, updated_room_state))
+    if(socket.assigns.room_user.is_editor == true) do
+      RoomStates.update_room_state(socket.assigns.room_state, updated_room_state)
+    end
+
     {:noreply, socket}
   end
 
   @impl true
   def handle_info(%{event: "presence_diff", payload: _diff}, socket) do
-    # Fetch the updated presence list
     topic = "room:#{socket.assigns.room.room_id}"
     presences = Presence.list(topic)
-    # Update the socket with the new presence state
     {:noreply, assign(socket, presences: presences)}
   end
 
@@ -193,10 +206,21 @@ defmodule VoidWeb.RoomLive do
   end
 
   def handle_info({:room_state_updated, room_state}, socket) do
+    socket =
+      case socket.assigns.room_user.is_editor do
+        false ->
+          push_event(socket, "update_editor", %{
+            content: room_state.contents,
+            is_read_only: not socket.assigns.room_user.is_editor
+          })
+
+        true ->
+          socket
+      end
+
     {:noreply,
      assign(socket,
-       room_state: room_state,
-       room_state_form: to_form(RoomState.changeset(room_state, %{}))
+       room_state: room_state
      )}
   end
 end
