@@ -10,4 +10,8 @@ defmodule VoidWeb.PageController do
   def not_found(conn, _params) do
     render(conn, :not_found, layout: false)
   end
+
+  def access_denied(conn, _params) do
+    render(conn, :access_denied, layout: false)
+  end
 end

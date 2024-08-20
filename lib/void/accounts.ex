@@ -83,6 +83,10 @@ defmodule Void.Accounts do
     Repo.get_by(User, email: email)
   end
 
+  def get_user_by_uuid(uuid) when is_binary(uuid) do
+    Repo.get_by(User, uuid: uuid)
+  end
+
   @doc """
   Gets a user by email and password.
 

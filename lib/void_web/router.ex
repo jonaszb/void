@@ -88,6 +88,7 @@ defmodule VoidWeb.Router do
 
     delete "/users/log_out", UserSessionController, :delete
     get "/rooms/404", PageController, :not_found
+    get "/access_denied", PageController, :access_denied
 
     live_session :current_user,
       on_mount: [{VoidWeb.UserAuth, :mount_current_user}] do

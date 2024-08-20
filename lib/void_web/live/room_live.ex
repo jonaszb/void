@@ -1,14 +1,48 @@
 defmodule VoidWeb.RoomLive do
   # alias Phoenix.LiveView
+  alias Void.RoomStates
+  alias Void.Rooms.RoomState
   use VoidWeb, :live_view
   alias Void.Rooms
+  alias VoidWeb.Presence
   # alias Phoenix.LiveView
   import VoidWeb.ThemeToggle
   # use Phoenix.LiveView
 
-  def mount(%{"room" => room_uuid}, _session, %{assigns: %{current_user: nil}} = socket) do
+  @impl true
+  def mount(
+        %{"room" => room_uuid},
+        %{"user_token" => user_token},
+        %{assigns: %{current_user: nil}} = socket
+      ) do
     socket =
-      push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
+      case Rooms.user_can_access_room(user_token, room_uuid) do
+        {:ok, true} ->
+          {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
+          room_users = Rooms.get_room_users(room)
+          room_state = RoomStates.get_room_state(room_uuid)
+
+          presences = track_presence(room_uuid, user_token)
+          Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
+
+          socket = assign(socket, presences: presences)
+
+          assign(socket,
+            room: room,
+            is_owner: false,
+            owner_name: owner_name,
+            room_users: room_users,
+            room_state: room_state,
+            room_state_form: to_form(RoomState.changeset(room_state, %{})),
+            presences: presences
+          )
+
+        _ ->
+          push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
+      end
+
+    # socket =
+    #   push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
 
     {:ok, socket, layout: false}
   end
@@ -19,12 +53,27 @@ defmodule VoidWeb.RoomLive do
         {:ok, true} ->
           {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
           room_users = Rooms.get_room_users(room)
-          IO.inspect(room_users)
+          room_state = RoomStates.get_room_state(room_uuid)
+
+          presences = track_presence(room_uuid, current_user)
+          Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
+
+          is_owner = room.owner_id == current_user.id
+
+          if is_owner do
+            Phoenix.PubSub.subscribe(Void.PubSub, "access-request:#{room_uuid}")
+          end
+
+          socket = assign(socket, presences: presences)
 
           assign(socket,
             room: room,
+            is_owner: is_owner,
             owner_name: owner_name,
-            room_users: room_users
+            room_users: room_users,
+            room_state: room_state,
+            room_state_form: to_form(RoomState.changeset(room_state, %{})),
+            presences: presences
           )
 
         _ ->
@@ -34,30 +83,77 @@ defmodule VoidWeb.RoomLive do
     {:ok, socket, layout: false}
   end
 
-  # def mount(%{"room" => room_uuid}, _session,  = socket) do
-  #   {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
-  #   {:ok, assign(socket, room: room, owner_name: owner_name)}
-  # end
+  defp track_presence(room_uuid, uuid) when is_binary(uuid) do
+    room_user = Rooms.get_room_user(uuid, room_uuid)
+    # As a guest, a different name can be displayed per room, so use the one chosen for this room
+    user = Void.Accounts.get_user_by_uuid(uuid) |> Map.put(:display_name, room_user.display_name)
+    track_presence(room_uuid, user)
+  end
+
+  defp track_presence(room_uuid, user) do
+    # Track the presence of the user in the room
+    topic = "room:#{room_uuid}"
+
+    Presence.track(self(), topic, user.uuid, %{
+      user_uuid: user.uuid,
+      display_name: user.display_name,
+      online_at: inspect(System.system_time(:second))
+    })
+
+    # Subscribe to the topic to receive presence diffs
+    VoidWeb.Endpoint.subscribe(topic)
+    Presence.list(topic)
+  end
 
   def render(assigns) do
     ~H"""
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs/loader.js">
+    </script>
     <.theme_toggle class="" />
     <h1><%= "Hello from #{@room.name} owned by #{@owner_name}" %></h1>
-    <button phx-click="delete">DELETE ROOM</button>
-    <ul>
+    <button :if={@is_owner} phx-click="delete">DELETE ROOM</button>
+    <ul :if={@is_owner}>
       <%= for user <- @room_users do %>
-        <li class="flex">
+        <li class="flex gap-4">
           <span><%= user.display_name %></span>
           <span><%= user.id %></span>
           <span :if={user.is_guest}>(Guest)</span>
           <span :if={not user.has_access}> -- awaiting access --</span>
-          <button :if={not user.has_access} class="btn-primary">GRANT ACCESS</button>
+          <button
+            :if={not user.has_access}
+            class="btn-primary"
+            phx-click="grant_access"
+            phx-value-id={user.id}
+          >
+            GRANT ACCESS
+          </button>
+          <button
+            :if={not user.has_access}
+            class="btn-primary"
+            phx-click="deny_access"
+            phx-value-id={user.id}
+          >
+            DENY ACCESS
+          </button>
         </li>
       <% end %>
     </ul>
+    <h1>WHO'S HERE?</h1>
+    <ul>
+      <%= for {user_id, %{metas: [meta | _]}} <- @presences do %>
+        <li>
+          <b><%= meta.display_name %></b>: User ID: <%= user_id %>, Online Since: <%= meta
+          |> Map.get(:online_at) %>
+        </li>
+      <% end %>
+    </ul>
+    <.form for={@room_state_form} id="room-content-form" phx-change="update_room_state">
+      <.input field={@room_state_form[:contents]} />
+    </.form>
     """
   end
 
+  @impl true
   def handle_event("delete", _, socket) do
     socket =
       case Rooms.delete_room(socket.assigns.room) do
@@ -66,5 +162,41 @@ defmodule VoidWeb.RoomLive do
       end
 
     {:noreply, socket}
+  end
+
+  def handle_event("deny_access", %{"id" => id}, socket) do
+    Rooms.deny_user_access(id)
+    {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
+  end
+
+  def handle_event("grant_access", %{"id" => id}, socket) do
+    Rooms.grant_user_access(id)
+    {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
+  end
+
+  def handle_event("update_room_state", %{"room_state" => updated_room_state}, socket) do
+    IO.inspect(RoomStates.update_room_state(socket.assigns.room_state, updated_room_state))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info(%{event: "presence_diff", payload: _diff}, socket) do
+    # Fetch the updated presence list
+    topic = "room:#{socket.assigns.room.room_id}"
+    presences = Presence.list(topic)
+    # Update the socket with the new presence state
+    {:noreply, assign(socket, presences: presences)}
+  end
+
+  def handle_info({:access_requested, _room_user}, socket) do
+    {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
+  end
+
+  def handle_info({:room_state_updated, room_state}, socket) do
+    {:noreply,
+     assign(socket,
+       room_state: room_state,
+       room_state_form: to_form(RoomState.changeset(room_state, %{}))
+     )}
   end
 end

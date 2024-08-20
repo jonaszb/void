@@ -13,13 +13,22 @@ defmodule VoidWeb.LobbyLive do
 
     socket =
       if Rooms.room_exists?(room_uuid) do
-        name_form = to_form(Accounts.change_user_display_name(%User{}))
+        case Rooms.user_can_access_room(user_token, room_uuid) do
+          {:ok, true} ->
+            push_navigate(socket, to: ~p"/rooms/#{room_uuid}")
 
-        assign(socket,
-          guest_uuid: user_token,
-          room_uuid: room_uuid,
-          name_form: name_form
-        )
+          _ ->
+            name_form = to_form(Accounts.change_user_display_name(%User{}))
+
+            Phoenix.PubSub.subscribe(Void.PubSub, "lobby:#{room_uuid}")
+
+            assign(socket,
+              guest_uuid: user_token,
+              room_user: Rooms.get_room_user(user_token, room_uuid),
+              room_uuid: room_uuid,
+              name_form: name_form
+            )
+        end
       else
         push_navigate(socket, to: ~p"/rooms/404")
       end
@@ -32,8 +41,16 @@ defmodule VoidWeb.LobbyLive do
     socket =
       if Rooms.room_exists?(room_uuid) do
         case Rooms.user_can_access_room(current_user, room_uuid) do
-          {:ok, true} -> push_navigate(socket, to: ~p"/rooms/#{room_uuid}")
-          _ -> assign(socket, room_uuid: room_uuid)
+          {:ok, true} ->
+            push_navigate(socket, to: ~p"/rooms/#{room_uuid}")
+
+          _ ->
+            Phoenix.PubSub.subscribe(Void.PubSub, "lobby:#{room_uuid}")
+
+            assign(socket,
+              room_uuid: room_uuid,
+              room_user: Rooms.get_room_user(current_user.uuid, room_uuid)
+            )
         end
       else
         push_navigate(socket, to: ~p"/rooms/404")
@@ -60,12 +77,19 @@ defmodule VoidWeb.LobbyLive do
           phx-change="validate_display_name"
           phx-submit="request_access"
         >
-          <.input field={@name_form[:display_name]} placeholder={@name_placeholder} />
+          <.input
+            field={@name_form[:display_name]}
+            placeholder={if @room_user, do: @room_user.display_name, else: @name_placeholder}
+            disabled={@room_user !== nil}
+          />
           <button
             class="btn-primary sm:w-fit justify-center"
-            disabled={@name_form.action !== :validate || @name_form.errors !== []}
+            disabled={
+              @room_user !== nil || @name_form.action !== :validate || @name_form.errors !== []
+            }
           >
-            Request access <.icon name="hero-lock-open-mini" class="ml-2 h-4" />
+            <%= if @room_user == nil, do: "Request access", else: "Access requested" %>
+            <.icon name="hero-lock-open-mini" class="ml-2 h-4" />
           </button>
         </.form>
       <% else %>
@@ -82,10 +106,22 @@ defmodule VoidWeb.LobbyLive do
             <%= @current_user.display_name %>
           </span>
         </button>
-        <button class="btn-primary sm:w-fit justify-center" type="button" phx-click="request_access">
-          Request access <.icon name="hero-lock-open-mini" class="ml-2 h-4" />
+        <button
+          class="btn-primary sm:w-fit justify-center"
+          type="button"
+          phx-click="request_access"
+          disabled={@room_user !== nil}
+        >
+          <%= if @room_user == nil, do: "Request access", else: "Access requested" %>
+          <.icon name="hero-lock-open-mini" class="ml-2 h-4" />
         </button>
       <% end %>
+      <p
+        :if={@room_user}
+        class="dark:text-green-200 text-green-800 p-4 border border-green-500/50 bg-green-300/25 rounded-lg"
+      >
+        Access request has been sent, you will be redirected to the room once it's approved by the owner.
+      </p>
       <%= if @current_user == nil do %>
         <div class="grid grid-cols-[1fr_min-content_1fr] w-full sm:w-96 before:content-[' '] before:h-px before:w-full before:bg-gray-500 after:content-[' '] after:h-px after:w-full after:bg-gray-500 items-center">
           <span class="dark:text-gray-300 text-lg px-4">
@@ -131,11 +167,37 @@ defmodule VoidWeb.LobbyLive do
   end
 
   def handle_event("request_access", %{"user" => %{"display_name" => display_name}}, socket) do
-    Accounts.get_guest_user_or_register(%User{
-      display_name: display_name,
-      uuid: socket.assigns.guest_uuid
-    })
-    |> Rooms.request_room_access(socket.assigns.room_uuid, display_name)
+    {:ok, room_user} =
+      Accounts.get_guest_user_or_register(%User{
+        display_name: display_name,
+        uuid: socket.assigns.guest_uuid
+      })
+      |> Rooms.request_room_access(socket.assigns.room_uuid, display_name)
+
+    {:noreply, assign(socket, room_user: room_user)}
+  end
+
+  def handle_event("request_access", _, %{assigns: %{current_user: current_user}} = socket) do
+    {:ok, room_user} = Rooms.request_room_access(current_user, socket.assigns.room_uuid)
+    {:noreply, assign(socket, room_user: room_user)}
+  end
+
+  def handle_info({:access_granted, room_user}, socket) do
+    socket =
+      case room_user.user_id === socket.assigns.room_user.user_id do
+        true -> push_navigate(socket, to: ~p"/rooms/#{socket.assigns.room_uuid}")
+        false -> socket
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:access_denied, room_user}, socket) do
+    socket =
+      case room_user.user_id === socket.assigns.room_user.user_id do
+        true -> push_navigate(socket, to: ~p"/access_denied")
+        false -> socket
+      end
 
     {:noreply, socket}
   end

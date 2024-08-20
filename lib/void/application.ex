@@ -17,7 +17,8 @@ defmodule Void.Application do
       # Start a worker by calling: Void.Worker.start_link(arg)
       # {Void.Worker, arg},
       # Start to serve requests, typically the last entry
-      VoidWeb.Endpoint
+      VoidWeb.Endpoint,
+      VoidWeb.Presence
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

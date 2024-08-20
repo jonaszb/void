@@ -1,5 +1,6 @@
 defmodule Void.Rooms do
   import Ecto.Query, warn: false
+  alias Phoenix.PubSub
   alias Void.Rooms.RoomUser
   alias Void.Rooms.RoomState
   alias Ecto.Multi
@@ -7,6 +8,10 @@ defmodule Void.Rooms do
   alias Void.Rooms.Room
   alias Void.Accounts.User
   @default_room_cap 10
+
+  def broadcast(topic, message) do
+    PubSub.broadcast(Void.PubSub, topic, message)
+  end
 
   def list_rooms_for_user(user_id) do
     Repo.all(from r in Room, where: r.owner_id == ^user_id, order_by: [desc: r.updated_at])
@@ -30,6 +35,10 @@ defmodule Void.Rooms do
     Repo.all(query)
   end
 
+  def get_room_user(id), do: Repo.get_by(RoomUser, id: id)
+
+  def get_room_user(uuid, room_id), do: Repo.get_by(RoomUser, user_id: uuid, room_id: room_id)
+
   def delete_room(room) do
     Repo.delete(room)
   end
@@ -50,9 +59,17 @@ defmodule Void.Rooms do
     end
   end
 
+  def user_can_access_room(nil, _room_uuid), do: false
+
+  def user_can_access_room(uuid, room_uuid) when is_binary(uuid) do
+    Repo.get_by(User, uuid: uuid) |> user_can_access_room(room_uuid)
+  end
+
   def user_can_access_room(user, room_uuid) do
     if room_exists?(room_uuid) do
-      query = from ru in RoomUser, where: ru.room_id == ^room_uuid and ru.user_id == ^user.uuid
+      query =
+        from ru in RoomUser,
+          where: ru.room_id == ^room_uuid and ru.user_id == ^user.uuid and ru.has_access == true
 
       case Repo.aggregate(query, :count) do
         0 -> {:ok, false}
@@ -98,17 +115,61 @@ defmodule Void.Rooms do
     end
   end
 
-  def request_room_access(user, room_id, display_name) do
-    room_user_attrs = %{
-      has_access: false,
-      is_owner: false,
-      is_editor: false,
-      is_guest: user.is_guest,
-      room_id: room_id,
-      user_id: user.uuid,
-      display_name: display_name
-    }
-
-    Repo.insert(RoomUser.changeset(%RoomUser{}, room_user_attrs))
+  def request_room_access(user, room_id) do
+    request_room_access(user, room_id, user.display_name)
   end
+
+  def request_room_access(user, room_id, display_name) do
+    case Repo.get_by(RoomUser, user_id: user.uuid, room_id: room_id) do
+      nil ->
+        room_user_attrs = %{
+          has_access: false,
+          is_owner: false,
+          is_editor: false,
+          is_guest: user.is_guest,
+          room_id: room_id,
+          user_id: user.uuid,
+          display_name: display_name
+        }
+
+        case Repo.insert(RoomUser.changeset(%RoomUser{}, room_user_attrs)) do
+          {:ok, room_user} ->
+            broadcast("access-request:#{room_user.room_id}", {:access_requested, room_user})
+            {:ok, room_user}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
+
+      _ ->
+        {:error, "Request is already pending"}
+    end
+  end
+
+  def deny_user_access(room_user) when is_binary(room_user) do
+    user = get_room_user(room_user)
+    Repo.delete(user)
+    broadcast("lobby:#{user.room_id}", {:access_denied, user})
+  end
+
+  def grant_user_access(room_user) when is_binary(room_user) do
+    case get_room_user(room_user)
+         |> maybe_set_expiration_date()
+         |> Ecto.Changeset.change(%{has_access: true})
+         |> Repo.update() do
+      {:ok, room_user} ->
+        broadcast("lobby:#{room_user.room_id}", {:access_granted, room_user})
+
+      _ ->
+        :error
+    end
+  end
+
+  defp maybe_set_expiration_date(%{is_guest: true} = room_user) do
+    Ecto.Changeset.change(room_user, %{
+      expires_at: DateTime.utc_now() |> DateTime.add(86400, :second) |> DateTime.truncate(:second)
+    })
+  end
+
+  defp maybe_set_expiration_date(room_user), do: room_user
 end
