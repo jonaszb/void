@@ -108,8 +108,6 @@ defmodule VoidWeb.RoomLive do
 
   def render(assigns) do
     ~H"""
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs/loader.js">
-    </script>
     <.theme_toggle class="" />
     <h1><%= "Hello from #{@room.name} owned by #{@owner_name}" %></h1>
     <button :if={@room_user.is_owner} phx-click="delete">DELETE ROOM</button>
