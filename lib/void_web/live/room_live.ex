@@ -1,6 +1,7 @@
 defmodule VoidWeb.RoomLive do
   # alias Phoenix.LiveView
   alias Void.RoomStates
+  alias Void.RoomUsers
   alias Void.Rooms.RoomState
   use VoidWeb, :live_view
   alias Void.Rooms
@@ -21,9 +22,10 @@ defmodule VoidWeb.RoomLive do
           {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
           room_users = Rooms.get_room_users(room)
           room_state = RoomStates.get_room_state(room_uuid)
-          this_room_user = Enum.find(room_users, fn u -> u.user_id == user_token end)
-          presences = track_presence(room_uuid, user_token)
+          this_room_user = get_current_room_user(room_users, user_token)
+          presences = track_presence(room_uuid, this_room_user)
           Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
+          Phoenix.PubSub.subscribe(Void.PubSub, "room-users:#{room_uuid}")
 
           socket = assign(socket, presences: presences)
 
@@ -41,9 +43,6 @@ defmodule VoidWeb.RoomLive do
           push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
       end
 
-    # socket =
-    #   push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
-
     {:ok, socket, layout: false}
   end
 
@@ -54,10 +53,11 @@ defmodule VoidWeb.RoomLive do
           {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
           room_users = Rooms.get_room_users(room)
           room_state = RoomStates.get_room_state(room_uuid)
-          this_room_user = Enum.find(room_users, fn u -> u.user_id == current_user.uuid end)
+          this_room_user = get_current_room_user(room_users, current_user)
 
-          presences = track_presence(room_uuid, current_user)
+          presences = track_presence(room_uuid, this_room_user)
           Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
+          Phoenix.PubSub.subscribe(Void.PubSub, "room-users:#{room_uuid}")
 
           is_owner = room.owner_id == current_user.id
 
@@ -84,20 +84,27 @@ defmodule VoidWeb.RoomLive do
     {:ok, socket, layout: false}
   end
 
-  defp track_presence(room_uuid, uuid) when is_binary(uuid) do
-    room_user = Rooms.get_room_user(uuid, room_uuid)
-    # As a guest, a different name can be displayed per room, so use the one chosen for this room
-    user = Void.Accounts.get_user_by_uuid(uuid) |> Map.put(:display_name, room_user.display_name)
-    track_presence(room_uuid, user)
+  defp get_current_room_user(room_users, current_user) when is_binary(current_user) do
+    Enum.find(room_users, fn u -> u.user_id == current_user end)
   end
+
+  defp get_current_room_user(room_users, current_user) do
+    Enum.find(room_users, fn u -> u.user_id == current_user.uuid end)
+  end
+
+  # defp track_presence(room_uuid, uuid) when is_binary(uuid) do
+  #   room_user = Rooms.get_room_user(uuid, room_uuid)
+  #   # As a guest, a different name can be displayed per room, so use the one chosen for this room
+  #   user = Void.Accounts.get_user_by_uuid(uuid) |> Map.put(:display_name, room_user.display_name)
+  #   track_presence(room_uuid, user)
+  # end
 
   defp track_presence(room_uuid, user) do
     # Track the presence of the user in the room
     topic = "room:#{room_uuid}"
 
-    Presence.track(self(), topic, user.uuid, %{
-      user_uuid: user.uuid,
-      display_name: user.display_name,
+    Presence.track(self(), topic, user.user_id, %{
+      room_user: user,
       online_at: inspect(System.system_time(:second))
     })
 
@@ -111,6 +118,22 @@ defmodule VoidWeb.RoomLive do
     <.theme_toggle class="" />
     <h1><%= "Hello from #{@room.name} owned by #{@owner_name}" %></h1>
     <button :if={@room_user.is_owner} phx-click="delete">DELETE ROOM</button>
+    <button
+      :if={not @room_user.is_editor}
+      class="btn-primary"
+      phx-click="request_edit"
+      phx-value-id={@room_user.id}
+    >
+      Request to edit
+    </button>
+    <button
+      :if={@room_user.is_owner and not @room_user.is_editor}
+      phx-value-id={@room_user.id}
+      phx-click="grant_edit"
+    >
+      👮
+    </button>
+
     <ul :if={@room_user.is_owner}>
       <%= for user <- @room_users do %>
         <li class="flex gap-4">
@@ -118,6 +141,10 @@ defmodule VoidWeb.RoomLive do
           <span><%= user.id %></span>
           <span :if={user.is_guest}>(Guest)</span>
           <span :if={not user.has_access}> -- awaiting access --</span>
+          <span :if={user.is_owner}>👑</span>
+          <span :if={user.is_editor}>🖊️</span>
+          <span :if={user.requesting_edit}>✋</span>
+          <button :if={@room_user.is_owner} phx-value-id={user.id} phx-click="grant_edit">🎁</button>
           <button
             :if={not user.has_access}
             class="btn-primary"
@@ -141,7 +168,7 @@ defmodule VoidWeb.RoomLive do
     <ul>
       <%= for {user_id, %{metas: [meta | _]}} <- @presences do %>
         <li>
-          <b><%= meta.display_name %></b>: User ID: <%= user_id %>, Online Since: <%= meta
+          <b><%= meta.room_user.display_name %></b>: User ID: <%= user_id %>, Online Since: <%= meta
           |> Map.get(:online_at) %>
         </li>
       <% end %>
@@ -156,7 +183,7 @@ defmodule VoidWeb.RoomLive do
         phx-hook="MonacoEditor"
         data-content={@room_state.contents}
         data-uuid={@room.room_id}
-        data-read-only={"#{@room_user.is_editor == false}"}
+        data-read_only={"#{@room_user.is_editor == false}"}
       >
       </div>
     </div>
@@ -192,6 +219,16 @@ defmodule VoidWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("request_edit", %{"id" => user_id}, socket) do
+    RoomUsers.request_edit(user_id)
+    {:noreply, socket}
+  end
+
+  def handle_event("grant_edit", %{"id" => user_id}, socket) do
+    RoomUsers.grant_edit(user_id)
+    {:noreply, socket}
+  end
+
   @impl true
   def handle_info(%{event: "presence_diff", payload: _diff}, socket) do
     topic = "room:#{socket.assigns.room.room_id}"
@@ -203,13 +240,34 @@ defmodule VoidWeb.RoomLive do
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
   end
 
+  def handle_info({:edit_request, room_user}, socket) do
+    room_users =
+      socket.assigns.room_users
+      |> Enum.map(fn ru ->
+        if ru.id == room_user.id, do: room_user, else: ru
+      end)
+
+    {:noreply, assign(socket, :room_users, room_users)}
+  end
+
+  def handle_info({:edit_granted, room_users}, socket) do
+    this_room_user = get_current_room_user(room_users, socket.assigns.room_user.user_id)
+
+    socket =
+      push_event(socket, "set_read_only", %{
+        read_only: not this_room_user.is_editor
+      })
+
+    {:noreply, assign(socket, room_users: room_users, room_user: this_room_user)}
+  end
+
   def handle_info({:room_state_updated, room_state}, socket) do
     socket =
       case socket.assigns.room_user.is_editor do
         false ->
           push_event(socket, "update_editor", %{
-            content: room_state.contents,
-            is_read_only: not socket.assigns.room_user.is_editor
+            content: room_state.contents
+            # read_only: not socket.assigns.room_user.is_editor
           })
 
         true ->

@@ -7,7 +7,7 @@ Hooks.MonacoEditor = {
         monacoLoader.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs' } });
 
         monacoLoader(['vs/editor/editor.main'], () => {
-            const isReadOnly = this.el.dataset.readOnly === 'true';
+            const isReadOnly = this.el.dataset.read_only === 'true';
             const theme = document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
 
             this.editor = monaco.editor.create(document.getElementById('editor'), {
@@ -26,21 +26,22 @@ Hooks.MonacoEditor = {
             window.addEventListener('toggle-darkmode', this.updateTheme.bind(this));
         });
 
-        this.handleEvent('update_editor', ({ content, is_read_only }) => {
+        this.handleEvent('update_editor', ({ content }) => {
             if (this.editor.getValue() !== content) {
                 this.editor.setValue(content || '');
             }
-            this.editor.updateOptions({ readOnly: is_read_only });
+        });
+
+        this.handleEvent('set_read_only', ({ read_only }) => {
+            this.editor.updateOptions({ readOnly: read_only });
         });
     },
 
     updated() {
         const newContent = this.el.dataset.content;
-        const isReadOnly = this.el.dataset.readOnly === 'true';
         if (this.editor && newContent !== this.editor.getValue()) {
             this.editor.setValue(newContent);
         }
-        this.editor.updateOptions({ readOnly: isReadOnly });
     },
 
     updateTheme() {

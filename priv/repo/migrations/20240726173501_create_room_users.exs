@@ -7,6 +7,7 @@ defmodule Void.Repo.Migrations.CreateRoomUsers do
       add :is_editor, :boolean
       add :is_owner, :boolean
       add :is_guest, :boolean
+      add :requesting_edit, :boolean
       add :display_name, :string
       add :expires_at, :utc_datetime
 

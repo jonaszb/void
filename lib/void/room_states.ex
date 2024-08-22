@@ -1,12 +1,6 @@
 defmodule Void.RoomStates do
-  import Ecto.Query, warn: false
-  alias Phoenix.PubSub
-  alias Void.Rooms.RoomUser
   alias Void.Rooms.RoomState
-  alias Ecto.Multi
   alias Void.Repo
-  alias Void.Rooms.Room
-  alias Void.Accounts.User
 
   def broadcast({:ok, room_state}, event \\ :room_state_updated) do
     Phoenix.PubSub.broadcast(

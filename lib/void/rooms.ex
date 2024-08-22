@@ -101,6 +101,7 @@ defmodule Void.Rooms do
         is_owner: true,
         is_editor: true,
         is_guest: false,
+        requesting_edit: false,
         display_name: user.display_name,
         room_id: room_id,
         user_id: user.uuid,
@@ -127,6 +128,7 @@ defmodule Void.Rooms do
           is_owner: false,
           is_editor: false,
           is_guest: user.is_guest,
+          requesting_edit: false,
           room_id: room_id,
           user_id: user.uuid,
           display_name: display_name
