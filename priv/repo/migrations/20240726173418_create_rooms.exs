@@ -3,7 +3,6 @@ defmodule Void.Repo.Migrations.CreateRooms do
 
   def change do
     create table(:rooms, primary_key: false) do
-      add :name, :string
       add :room_id, :binary_id, primary_key: true
       add :owner_id, references(:users, on_delete: :nothing)
 

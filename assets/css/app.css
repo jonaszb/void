@@ -10,6 +10,14 @@
     mask-image: linear-gradient(to bottom, black 5%, transparent 100%);
 }
 
+.btn {
+    @apply px-4 py-2 rounded-lg uppercase font-bold text-sm text-white flex items-center enabled:hover:brightness-105 transition-all disabled:bg-zinc-400;
+}
+
 .btn-primary {
-    @apply bg-amber-500 px-4 py-2 rounded-lg uppercase font-bold text-sm text-white flex items-center enabled:hover:brightness-105 transition-all disabled:bg-zinc-400;
+    @apply btn bg-amber-500;
+}
+
+.btn-danger {
+    @apply btn bg-red-500;
 }

@@ -5,7 +5,7 @@ defmodule VoidWeb.DashboardLive do
 
   def mount(_params, _session, socket) do
     socket = assign(socket, page_title: "Void Dashboard")
-    rooms = list_rooms_for_user(socket.assigns.current_user.id)
+    rooms = list_room_states_for_user(socket.assigns.current_user.id)
     {:ok, socket |> assign(rooms: rooms)}
   end
 

@@ -14,6 +14,11 @@ Hooks.MonacoEditor = {
                 value: this.el.dataset.content,
                 language: 'javascript',
                 readOnly: isReadOnly,
+                automaticLayout: true,
+                padding: {
+                    top: 12,
+                    bottom: 12,
+                },
                 theme,
             });
             if (!isReadOnly) {

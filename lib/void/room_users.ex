@@ -40,6 +40,17 @@ defmodule Void.RoomUsers do
     |> broadcast(:edit_request)
   end
 
+  def cancel_request_edit(room_user) when is_binary(room_user) do
+    get_room_user(room_user) |> cancel_request_edit()
+  end
+
+  def cancel_request_edit(room_user) do
+    room_user
+    |> RoomUser.changeset(%{requesting_edit: false})
+    |> Repo.update()
+    |> broadcast(:edit_request)
+  end
+
   def grant_edit(room_user) when is_binary(room_user) do
     get_room_user(room_user) |> grant_edit()
   end

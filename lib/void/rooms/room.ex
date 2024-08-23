@@ -4,7 +4,6 @@ defmodule Void.Rooms.Room do
   @primary_key {:room_id, :binary_id, autogenerate: false}
 
   schema "rooms" do
-    field :name, :string
     field :owner_id, :id
     has_many :room_users, Void.Rooms.RoomUser, foreign_key: :room_id, on_delete: :delete_all
     has_many :room_states, Void.Rooms.RoomState, foreign_key: :room_id, on_delete: :delete_all
@@ -15,7 +14,7 @@ defmodule Void.Rooms.Room do
   @doc false
   def changeset(room, attrs) do
     room
-    |> cast(attrs, [:name, :room_id, :owner_id])
-    |> validate_required([:name, :room_id, :owner_id])
+    |> cast(attrs, [:room_id, :owner_id])
+    |> validate_required([:room_id, :owner_id])
   end
 end

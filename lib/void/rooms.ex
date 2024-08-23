@@ -13,8 +13,12 @@ defmodule Void.Rooms do
     PubSub.broadcast(Void.PubSub, topic, message)
   end
 
-  def list_rooms_for_user(user_id) do
-    Repo.all(from r in Room, where: r.owner_id == ^user_id, order_by: [desc: r.updated_at])
+  def list_room_states_for_user(user_id) do
+    IO.inspect(user_id)
+
+    Repo.all(
+      from rs in RoomState, where: rs.owner_id == ^user_id, order_by: [desc: rs.updated_at]
+    )
   end
 
   def get_room_by_uuid(room_uuid) do
@@ -93,8 +97,14 @@ defmodule Void.Rooms do
       room_name = Void.Slugs.generate()
       room_id = Ecto.UUID.generate()
 
-      room_attrs = %{name: room_name, owner_id: user.id, room_id: room_id}
-      room_state_attrs = %{content: "", name: "New Room", room_id: room_id}
+      room_attrs = %{owner_id: user.id, room_id: room_id}
+
+      room_state_attrs = %{
+        content: "// Welcome to #{room_name}!",
+        name: room_name,
+        room_id: room_id,
+        owner_id: user.id
+      }
 
       room_user_attrs = %{
         has_access: true,

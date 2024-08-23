@@ -87,6 +87,10 @@ defmodule Void.Accounts do
     Repo.get_by(User, uuid: uuid)
   end
 
+  def get_user_picture(uuid) when is_binary(uuid) do
+    get_user_by_uuid(uuid) |> Map.get(:picture)
+  end
+
   @doc """
   Gets a user by email and password.
 
