@@ -339,7 +339,10 @@ defmodule VoidWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class={[
+          "mt-2 block w-full rounded-lg text-gray-900 focus:ring-0 sm:text-sm sm:leading-6 disabled:bg-gray-100 dark:text-gray-50 dark:disabled:text-gray-300 dark:bg-gray-900 dark:disabled:bg-gray-800",
+          "phx-no-feedback:border-zinc-300 dark:phx-no-feedback:border-gray-600 phx-no-feedback:focus:border-blue-400"
+        ]}
         multiple={@multiple}
         {@rest}
       >

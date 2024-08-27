@@ -25,7 +25,7 @@ defmodule VoidWeb.Room.RoomComponents do
     """
   end
 
-  attr :icon_name, :string, required: true
+  attr :name, :string, required: true
   attr :is_active, :boolean, required: true
   attr :tab_name, :atom, required: true
 
@@ -67,8 +67,14 @@ defmodule VoidWeb.Room.RoomComponents do
         class="flex flex-col gap-4 content-between items-end"
         phx-submit="update_room_state"
       >
-        <fieldset class="w-full">
+        <fieldset class="w-full flex flex-col gap-4">
           <.input label="Room name" field={@room_state_form[:name]} />
+          <.input
+            label="Language"
+            field={@room_state_form[:language]}
+            type="select"
+            options={@supported_languages}
+          />
         </fieldset>
         <button disabled={@room_state_form.source.errors !== []} class="btn-primary w-fit">
           SAVE
@@ -108,7 +114,8 @@ defmodule VoidWeb.Room.RoomComponents do
             />
             <span
               :if={picture == nil}
-              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5 flex justify-center items-center"
+              aria-role="presentation"
+              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5 flex justify-center items-center cursor-default"
             >
               <%= get_initial(room_user.display_name) %>
             </span>

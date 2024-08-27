@@ -12,7 +12,33 @@ defmodule VoidWeb.RoomLive do
   import VoidWeb.Room.RoomComponents
 
   @sidebar_tabs ["chat", "users", "settings"]
-
+  @supported_languages [
+    {"Bash", "shell"},
+    {"C", "c"},
+    {"C#", "csharp"},
+    {"C++", "cpp"},
+    {"CSS", "css"},
+    {"Dockerfile", "dockerfile"},
+    {"Elixir", "elixir"},
+    {"Go", "go"},
+    {"HTML", "html"},
+    {"Java", "java"},
+    {"JavaScript", "javascript"},
+    {"JSON", "json"},
+    {"Julia", "julia"},
+    {"Kotlin", "kotlin"},
+    {"Less", "less"},
+    {"Pascal", "pascal"},
+    {"PHP", "php"},
+    {"PowerShell", "powershell"},
+    {"Python", "python"},
+    {"Rust", "rust"},
+    {"Scala", "scala"},
+    {"SCSS", "scss"},
+    {"SQL", "sql"},
+    {"TypeScript", "typescript"},
+    {"YAML", "yaml"}
+  ]
   @impl true
   def mount(
         %{"room" => room_uuid},
@@ -96,6 +122,8 @@ defmodule VoidWeb.RoomLive do
   defp get_current_room_user(room_users, current_user) do
     Enum.find(room_users, fn u -> u.user_id == current_user.uuid end)
   end
+
+  defp get_supported_languages(), do: @supported_languages
 
   defp track_presence(room_uuid, user) do
     # Track the presence of the user in the room
@@ -217,11 +245,14 @@ defmodule VoidWeb.RoomLive do
       case socket.assigns.room_user.is_editor do
         false ->
           push_event(socket, "update_editor", %{
-            content: room_state.contents
+            content: room_state.contents,
+            language: room_state.language
           })
 
         true ->
-          socket
+          push_event(socket, "update_editor", %{
+            language: room_state.language
+          })
       end
 
     {:noreply,

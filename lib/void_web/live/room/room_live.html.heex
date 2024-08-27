@@ -50,7 +50,11 @@
       current_user={@room_user}
     />
     <.chat_section :if={@active_tab == :chat} />
-    <.settings_section :if={@active_tab == :settings} room_state_form={@room_state_form} />
+    <.settings_section
+      :if={@active_tab == :settings}
+      room_state_form={@room_state_form}
+      supported_languages={get_supported_languages()}
+    />
   </aside>
 
   <section class="h-full col-start-1 col-span-2 md:col-span-1 border border-gray-500/35 overflow-hidden mx-1">
@@ -62,9 +66,9 @@
         data-content={@room_state.contents}
         data-uuid={@room.room_id}
         data-read_only={"#{@room_user.is_editor == false}"}
+        data-language={@room_state.language}
       >
       </div>
     </div>
   </section>
 </main>
-<.flash_group flash={@flash} />
