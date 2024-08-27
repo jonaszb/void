@@ -5,7 +5,7 @@ defmodule VoidWeb.GithubAuth do
   alias Void.Accounts.User
 
   # http://localhost:4000/auth/github
-  def request(conn) do
+  def request(conn, params) do
     IO.inspect(Application.get_env(:assent, :github))
 
     Application.get_env(:assent, :github)
@@ -15,7 +15,10 @@ defmodule VoidWeb.GithubAuth do
       {:ok, %{url: url, session_params: session_params}} ->
         # Session params (used for OAuth 2.0 and OIDC strategies) will be
         # retrieved when user returns for the callback phase
-        conn = put_session(conn, :session_params, session_params)
+        conn =
+          conn
+          |> put_session(:session_params, session_params)
+          |> put_session(:user_return_to, Map.get(params, "redirect_to", "/"))
 
         # Redirect end-user to Github to authorize access to their account
         conn
@@ -39,7 +42,6 @@ defmodule VoidWeb.GithubAuth do
     # expect GET query params, but the provider could also return the user with
     # a POST request where the params is in the POST body.
     %{params: params} = fetch_query_params(conn)
-
     # The session params (used for OAuth 2.0 and OIDC strategies) stored in the
     # request phase will be used in the callback phase
     session_params = get_session(conn, :session_params)
@@ -60,7 +62,8 @@ defmodule VoidWeb.GithubAuth do
         |> VoidWeb.UserAuth.log_in_user(user_record)
         |> put_session(:github_user, user)
         |> put_session(:github_user_token, token)
-        |> Phoenix.Controller.redirect(to: "/")
+
+      # |> Phoenix.Controller.redirect(to: "/")
 
       {:error, error} ->
         # Authorizaiton failed

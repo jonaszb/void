@@ -1,8 +1,8 @@
 <main
   id="room"
-  class="w-screen h-screen text-blue-950 dark:text-blue-50 grid grid-cols-[1fr,18rem] grid-rows-[5rem,1fr] lg:grid-cols-[1fr,22rem] xl:grid-cols-[1fr,26rem]"
+  class="w-screen h-screen text-blue-950 dark:text-blue-50 grid grid-cols-[1fr,18rem] grid-rows-[5rem,1fr] lg:grid-cols-[1fr,22rem] xl:grid-cols-[1fr,26rem] bg-zinc-50 dark:bg-zinc-950"
 >
-  <header class="flex px-2 md:px-4 justify-between font-work col-start-1 col-span-2 md:col-span-1 bg-zinc-50 dark:bg-zinc-950 relative">
+  <header class="flex px-2 md:px-4 justify-between font-work col-start-1 col-span-2 md:col-span-1 relative">
     <div class="flex gap-4 items-center ">
       <.logo_round class="w-12" />
       <h1 class="hidden sm:block text-lg"><%= @room_state.name %></h1>
@@ -13,7 +13,10 @@
       <span class="flex items-center">
         <.theme_toggle class="mr-4 md:mr-8" />
         <.link href={~p"/"}>
-          <.icon name="hero-arrow-right-circle" class="text-gray-500 hover:text-red-500 w-6" />
+          <.icon
+            name="hero-arrow-right-end-on-rectangle"
+            class="text-gray-500 hover:text-red-500 w-6"
+          />
         </.link>
       </span>
     </div>
@@ -50,7 +53,7 @@
     <.settings_section :if={@active_tab == :settings} room_state_form={@room_state_form} />
   </aside>
 
-  <section class="h-full col-start-1 col-span-2 md:col-span-1 border border-blue-500/35 rounded overflow-hidden overflow-scroll mx-1">
+  <section class="h-full col-start-1 col-span-2 md:col-span-1 border border-gray-500/35 overflow-hidden mx-1">
     <div id="editor-container" class="h-full" phx-update="ignore">
       <div
         class="h-full"

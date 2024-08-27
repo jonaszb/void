@@ -134,7 +134,7 @@ defmodule VoidWeb.RoomLive do
   end
 
   def handle_event("update_room_state", %{"room_state" => updated_room_state}, socket) do
-    if(socket.assigns.room_user.is_editor == true or socket.assigns.room_user.is_owner == true) do
+    if(socket.assigns.room_user.is_editor or socket.assigns.room_user.is_owner) do
       RoomStates.update_room_state(socket.assigns.room_state, updated_room_state)
     end
 

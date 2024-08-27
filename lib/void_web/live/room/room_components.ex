@@ -89,6 +89,11 @@ defmodule VoidWeb.Room.RoomComponents do
   attr :current_user, :map, required: true
 
   def users_section(assigns) do
+    assigns =
+      assign(assigns,
+        pending_users: Enum.filter(assigns.room_users, fn ru -> ru.has_access == false end)
+      )
+
     ~H"""
     <div class="text-center my-2 text-gray-500"><%= count_users(@presences) %></div>
     <ul class="flex flex-col">
@@ -133,6 +138,31 @@ defmodule VoidWeb.Room.RoomComponents do
           </ul>
         </li>
       <% end %>
+      <div :if={Enum.count(@pending_users) > 0}>
+        <div class="text-center my-2 text-gray-500">Awaiting access:</div>
+        <ul>
+          <%= for room_user <- @pending_users do %>
+            <li class="flex justify-between p-2 items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5 flex justify-center items-center">
+                  <%= get_initial(room_user.display_name) %>
+                </span>
+                <span class={[@current_user.id == room_user.id && "font-bold"]}>
+                  <%= room_user.display_name %>
+                </span>
+              </span>
+              <ul class="flex gap-2 items-center px-2">
+                <button class="btn bg-green-500" phx-click="grant_access" phx-value-id={room_user.id}>
+                  ADMIT
+                </button>
+                <button class="btn-danger" phx-click="deny_access" phx-value-id={room_user.id}>
+                  DENY
+                </button>
+              </ul>
+            </li>
+          <% end %>
+        </ul>
+      </div>
     </ul>
     """
   end

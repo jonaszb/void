@@ -129,7 +129,7 @@ defmodule VoidWeb.LobbyLive do
           </span>
         </div>
         <.link
-          href={~p"/auth/github"}
+          href={~p"/auth/github?redirect_to=%2Frooms%2F#{@room_uuid}"}
           class="flex gap-2 rounded-lg bg-blue-50 hover:bg-blue-100 px-4 py-2 text-gray-800 dark:border-transparent border border-gray-700 w-full sm:w-fit justify-center font-bold"
         >
           <span>Sign in with GitHub</span>
