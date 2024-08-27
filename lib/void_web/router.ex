@@ -47,8 +47,10 @@ defmodule VoidWeb.Router do
     scope "/dev" do
       pipe_through :browser
 
+      live "/log_in", VoidWeb.UserLoginLive, :new
       live_dashboard "/telemetry-dashboard", metrics: VoidWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+      post "/log_in", VoidWeb.UserSessionController, :create
     end
   end
 
