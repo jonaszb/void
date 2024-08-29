@@ -8,7 +8,7 @@
 import Config
 config :assent, http_adapter: {Assent.HTTPAdapter.Finch, supervisor: Void.Finch}
 
-if config_env() == :dev do
+if config_env() !== :prod do
   config :assent,
     github: [
       client_id: System.get_env("GITHUB_CLIENT_ID"),

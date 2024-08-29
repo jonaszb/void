@@ -5,11 +5,14 @@ defmodule Void.AccountsFixtures do
   """
 
   def unique_user_email, do: "user#{System.unique_integer()}@example.com"
+  def valid_username, do: "johndoe#{System.unique_integer()}"
   def valid_user_password, do: "hello world!"
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
       email: unique_user_email(),
+      email_verified: false,
+      username: valid_username(),
       password: valid_user_password()
     })
   end

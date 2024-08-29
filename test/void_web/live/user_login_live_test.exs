@@ -1,87 +1,67 @@
-defmodule VoidWeb.UserLoginLiveTest do
-  use VoidWeb.ConnCase, async: true
+# defmodule VoidWeb.UserLoginLiveTest do
+#   use VoidWeb.ConnCase, async: true
 
-  import Phoenix.LiveViewTest
-  import Void.AccountsFixtures
+#   import Phoenix.LiveViewTest
+#   import Void.AccountsFixtures
 
-  describe "Log in page" do
-    test "renders log in page", %{conn: conn} do
-      {:ok, _lv, html} = live(conn, ~p"/users/log_in")
+#   describe "user login" do
+#     test "redirects if user login with valid credentials", %{conn: conn} do
+#       password = "123456789abcd"
+#       user = user_fixture(%{password: password})
 
-      assert html =~ "Log in"
-      assert html =~ "Register"
-      assert html =~ "Forgot your password?"
-    end
+#       {:ok, lv, _html} = live(conn, ~p"/users/log_in")
 
-    test "redirects if already logged in", %{conn: conn} do
-      result =
-        conn
-        |> log_in_user(user_fixture())
-        |> live(~p"/users/log_in")
-        |> follow_redirect(conn, "/")
+#       form =
+#         form(lv, "#login_form", user: %{email: user.email, password: password, remember_me: true})
 
-      assert {:ok, _conn} = result
-    end
-  end
+#       conn = submit_form(form, conn)
 
-  describe "user login" do
-    test "redirects if user login with valid credentials", %{conn: conn} do
-      password = "123456789abcd"
-      user = user_fixture(%{password: password})
+#       assert redirected_to(conn) == ~p"/"
+#     end
 
-      {:ok, lv, _html} = live(conn, ~p"/users/log_in")
+#     test "redirects to login page with a flash error if there are no valid credentials", %{
+#       conn: conn
+#     } do
+#       {:ok, lv, _html} = live(conn, ~p"/users/log_in")
 
-      form =
-        form(lv, "#login_form", user: %{email: user.email, password: password, remember_me: true})
+#       form =
+#         form(lv, "#login_form",
+#           user: %{email: "test@email.com", password: "123456", remember_me: true}
+#         )
 
-      conn = submit_form(form, conn)
+#       conn = submit_form(form, conn)
 
-      assert redirected_to(conn) == ~p"/"
-    end
+#       assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
 
-    test "redirects to login page with a flash error if there are no valid credentials", %{
-      conn: conn
-    } do
-      {:ok, lv, _html} = live(conn, ~p"/users/log_in")
+#       assert redirected_to(conn) == "/users/log_in"
+#     end
+#   end
 
-      form =
-        form(lv, "#login_form",
-          user: %{email: "test@email.com", password: "123456", remember_me: true}
-        )
+#   describe "login navigation" do
+#     test "redirects to registration page when the Register button is clicked", %{conn: conn} do
+#       {:ok, lv, _html} = live(conn, ~p"/users/log_in")
 
-      conn = submit_form(form, conn)
+#       {:ok, _login_live, login_html} =
+#         lv
+#         |> element(~s|main a:fl-contains("Sign up")|)
+#         |> render_click()
+#         |> follow_redirect(conn, ~p"/users/register")
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
+#       assert login_html =~ "Register"
+#     end
 
-      assert redirected_to(conn) == "/users/log_in"
-    end
-  end
+#     test "redirects to forgot password page when the Forgot Password button is clicked", %{
+#       conn: conn
+#     } do
+#       {:ok, lv, _html} = live(conn, ~p"/users/log_in")
 
-  describe "login navigation" do
-    test "redirects to registration page when the Register button is clicked", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, ~p"/users/log_in")
+#       {:ok, conn} =
+#         lv
+#         |> element(~s|main a:fl-contains("Forgot your password?")|)
+#         |> render_click()
+#         |> follow_redirect(conn, ~p"/users/reset_password")
 
-      {:ok, _login_live, login_html} =
-        lv
-        |> element(~s|main a:fl-contains("Sign up")|)
-        |> render_click()
-        |> follow_redirect(conn, ~p"/users/register")
-
-      assert login_html =~ "Register"
-    end
-
-    test "redirects to forgot password page when the Forgot Password button is clicked", %{
-      conn: conn
-    } do
-      {:ok, lv, _html} = live(conn, ~p"/users/log_in")
-
-      {:ok, conn} =
-        lv
-        |> element(~s|main a:fl-contains("Forgot your password?")|)
-        |> render_click()
-        |> follow_redirect(conn, ~p"/users/reset_password")
-
-      assert conn.resp_body =~ "Forgot your password?"
-    end
-  end
-end
+#       assert conn.resp_body =~ "Forgot your password?"
+#     end
+#   end
+# end

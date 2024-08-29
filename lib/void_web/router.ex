@@ -94,8 +94,8 @@ defmodule VoidWeb.Router do
 
     live_session :current_user,
       on_mount: [{VoidWeb.UserAuth, :mount_current_user}] do
-      live "/users/confirm/:token", UserConfirmationLive, :edit
-      live "/users/confirm", UserConfirmationInstructionsLive, :new
+      # live "/users/confirm/:token", UserConfirmationLive, :edit
+      # live "/users/confirm", UserConfirmationInstructionsLive, :new
       live "/rooms/:room", RoomLive
       live "/rooms/:room/lobby", LobbyLive
     end
