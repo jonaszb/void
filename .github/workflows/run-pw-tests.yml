@@ -1,0 +1,66 @@
+name: CI
+
+# Trigger the workflow on pull requests to the main branch
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: void
+        ports:
+          - 5432:5432
+        options: > 
+          --health-cmd="pg_isready -U postgres" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Set up Elixir
+      uses: actions/setup-elixir@v1
+      with:
+        elixir-version: '1.15.7'  # Adjust the version as needed
+        otp-version: '26.0.4'
+
+    - name: Install dependencies
+      run: |
+        mix local.rebar --force
+        mix local.hex --force
+        mix deps.get
+
+    - name: Set up the database
+      run: mix ecto.setup
+
+    - name: Run the Phoenix server in the background
+      run: |
+        mix phx.server &
+        sleep 5
+        until curl -sSf http://localhost:4000 > /dev/null; do
+          printf '.'
+          sleep 5
+        done
+      env:
+        MIX_ENV: test
+        DATABASE_URL: ecto://postgres:postgres@localhost/void
+
+    - name: Install test deps
+      run: yarn install --cwd tests/pw
+
+    - name: Run Playwright tests
+      run: yarn test --cwd tests/pw
+      env:
+        MIX_ENV: test
+        DATABASE_URL: ecto://postgres:postgres@localhost/void
