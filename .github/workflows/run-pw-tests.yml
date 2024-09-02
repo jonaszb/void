@@ -47,6 +47,9 @@ jobs:
         mix ecto.create
         mix ecto.migrate
 
+    - name: Compile Elixir code
+      run: mix compile
+
     - name: Run Elixir tests
       run: mix test
       env:
@@ -66,10 +69,10 @@ jobs:
         DATABASE_URL: ecto://postgres:postgres@localhost/void_test
 
     - name: Install test deps
-      run: yarn install --cwd tests/pw
+      run: yarn install --cwd test/pw
 
     - name: Run Playwright tests
-      run: yarn test --cwd tests/pw
+      run: yarn test --cwd test/pw
       env:
         MIX_ENV: test
         DATABASE_URL: ecto://postgres:postgres@localhost/void_test
