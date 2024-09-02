@@ -71,7 +71,7 @@ jobs:
         docker run --rm \
           -v $PWD:/app \
           -w /app/test/pw \
-          -p 4002:4002 \
+          --network host \
           -e BASE_URL="http://localhost:4002" \
           mcr.microsoft.com/playwright:v1.46.1-jammy \
           sh -c "yarn install;yarn test"
