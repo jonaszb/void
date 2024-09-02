@@ -42,13 +42,22 @@ jobs:
         mix deps.get
 
     - name: Set up the database
-      run: mix ecto.setup
+      run:  | 
+      mix ecto.setup
+      mix ecto.create
+      mix ecto.migrate
+
+    - name: Run Elixir tests
+      run: mix test
+      env:
+        MIX_ENV: test
+        DATABASE_URL: ecto://postgres:postgres@localhost/void_test
 
     - name: Run the Phoenix server in the background
       run: |
         mix phx.server &
         sleep 5
-        until curl -sSf http://localhost:4000 > /dev/null; do
+        until curl -sSf http://localhost:4002 > /dev/null; do
           printf '.'
           sleep 5
         done
