@@ -58,12 +58,12 @@ jobs:
       run: |
         mix phx.server &
         sleep 5
-        until curl -sSf http://localhost:4002 > /dev/null; do
+        until curl -sSf http://localhost:4000 > /dev/null; do
           printf '.'
           sleep 5
         done
       env:
-        MIX_ENV: test
+        MIX_ENV: dev
         DATABASE_URL: ecto://postgres:postgres@localhost/void_test
 
     - name: Run Playwright tests
@@ -73,8 +73,8 @@ jobs:
         yarn playwright install --with-deps
         yarn test
       env:
-        MIX_ENV: test
-        BASE_URL: http://localhost:4002
+        MIX_ENV: dev
+        BASE_URL: http://localhost:4000
         DATABASE_URL: ecto://postgres:postgres@localhost/void_test
 
     - uses: actions/upload-artifact@v4
