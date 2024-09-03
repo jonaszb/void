@@ -2,6 +2,7 @@ defmodule VoidWeb.Router do
   use VoidWeb, :router
 
   import VoidWeb.UserAuth
+  import Config, only: [config_env: 0]
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -36,7 +37,7 @@ defmodule VoidWeb.Router do
   # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:void, :dev_routes) do
+  if Mix.env() == :test or Application.compile_env(:void, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
     # it behind authentication and allow only admins to access it.
     # If your application does not have an admins-only section yet,
@@ -47,8 +48,10 @@ defmodule VoidWeb.Router do
     scope "/dev" do
       pipe_through :browser
 
+      live "/log_in", VoidWeb.UserLoginLive, :new
       live_dashboard "/telemetry-dashboard", metrics: VoidWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+      post "/log_in", VoidWeb.UserSessionController, :create
     end
   end
 
@@ -92,8 +95,8 @@ defmodule VoidWeb.Router do
 
     live_session :current_user,
       on_mount: [{VoidWeb.UserAuth, :mount_current_user}] do
-      live "/users/confirm/:token", UserConfirmationLive, :edit
-      live "/users/confirm", UserConfirmationInstructionsLive, :new
+      # live "/users/confirm/:token", UserConfirmationLive, :edit
+      # live "/users/confirm", UserConfirmationInstructionsLive, :new
       live "/rooms/:room", RoomLive
       live "/rooms/:room/lobby", LobbyLive
     end

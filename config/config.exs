@@ -8,12 +8,14 @@
 import Config
 config :assent, http_adapter: {Assent.HTTPAdapter.Finch, supervisor: Void.Finch}
 
-config :assent,
-  github: [
-    client_id: System.get_env("GITHUB_CLIENT_ID"),
-    client_secret: System.get_env("GITHUB_CLIENT_SECRET"),
-    redirect_uri: "http://localhost:4000/auth/github/callback"
-  ]
+if config_env() !== :prod do
+  config :assent,
+    github: [
+      client_id: System.get_env("GITHUB_CLIENT_ID"),
+      client_secret: System.get_env("GITHUB_CLIENT_SECRET"),
+      redirect_uri: "http://localhost:4000/auth/github/callback"
+    ]
+end
 
 config :void,
   ecto_repos: [Void.Repo],

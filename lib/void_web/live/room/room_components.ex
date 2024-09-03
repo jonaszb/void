@@ -12,13 +12,20 @@ defmodule VoidWeb.Room.RoomComponents do
           name="hero-chat-bubble-left-right"
           tab_name={:chat}
           is_active={@active_tab == :chat}
+          title="Chat"
         />
-        <.nav_menu_item name="hero-users" tab_name={:users} is_active={@active_tab == :users} />
+        <.nav_menu_item
+          name="hero-users"
+          tab_name={:users}
+          is_active={@active_tab == :users}
+          title="User list"
+        />
         <.nav_menu_item
           :if={@is_owner}
           name="hero-wrench"
           tab_name={:settings}
           is_active={@active_tab == :settings}
+          title="Settings"
         />
       </ul>
     </nav>
@@ -28,13 +35,13 @@ defmodule VoidWeb.Room.RoomComponents do
   attr :name, :string, required: true
   attr :is_active, :boolean, required: true
   attr :tab_name, :atom, required: true
+  attr :rest, :global
 
   def nav_menu_item(assigns) do
     ~H"""
-    <li class="border-zinc-500/50 [&:not(:last-child)]:border-r-2">
+    <li role="tab" {@rest} class="border-zinc-500/50 [&:not(:last-child)]:border-r-2">
       <a
         class="py-7  flex justify-center cursor-pointer transition-all group hover:brightness-105"
-        role="tab"
         phx-value-tab_name={@tab_name}
         phx-click="select_tab"
       >
@@ -104,7 +111,7 @@ defmodule VoidWeb.Room.RoomComponents do
     <div class="text-center my-2 text-gray-500"><%= count_users(@presences) %></div>
     <ul class="flex flex-col">
       <%= for {user_uuid, %{metas: [ %{picture: picture, room_user: room_user} | _]}} <- @presences do %>
-        <li class="flex justify-between p-2 items-center" ,>
+        <li title="Room user" class="flex justify-between p-2 items-center" ,>
           <span class="flex items-center gap-2">
             <img
               :if={picture}
@@ -124,7 +131,7 @@ defmodule VoidWeb.Room.RoomComponents do
             </span>
           </span>
           <ul class="flex gap-2 items-center px-2">
-            <li :if={is_requesting_edit?(@room_users, user_uuid)}>
+            <li :if={is_requesting_edit?(@room_users, user_uuid)} title="Raised hand">
               <.icon name="hero-hand-raised" class="text-amber-500 w-5" />
             </li>
             <%= if not is_editor?(@room_users, user_uuid) do %>
@@ -133,12 +140,17 @@ defmodule VoidWeb.Room.RoomComponents do
                   (@current_user.is_editor or
                      @current_user.is_owner) and is_editor?(@room_users, user_uuid) == false
               }>
-                <button phx-value-id={room_user.id} phx-click="grant_edit">
+                <button title="Make editor" phx-value-id={room_user.id} phx-click="grant_edit">
                   <.icon name="hero-pencil" class="text-gray-500 w-5 hover:text-amber-500" />
                 </button>
               </li>
             <% else %>
-              <button phx-value-id={room_user.id} phx-click="grant_edit" disabled={true}>
+              <button
+                title="Make editor"
+                phx-value-id={room_user.id}
+                phx-click="grant_edit"
+                disabled={true}
+              >
                 <.icon name="hero-pencil" class="text-amber-500 w-5" />
               </button>
             <% end %>
@@ -149,9 +161,12 @@ defmodule VoidWeb.Room.RoomComponents do
         <div class="text-center my-2 text-gray-500">Awaiting access:</div>
         <ul>
           <%= for room_user <- @pending_users do %>
-            <li class="flex justify-between p-2 items-center">
+            <li title="Pending user" class="flex justify-between p-2 items-center">
               <span class="flex items-center gap-2">
-                <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5 flex justify-center items-center">
+                <span
+                  aria-role="presentation"
+                  class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 p-0.5 flex justify-center items-center"
+                >
                   <%= get_initial(room_user.display_name) %>
                 </span>
                 <span class={[@current_user.id == room_user.id && "font-bold"]}>
@@ -221,6 +236,7 @@ defmodule VoidWeb.Room.RoomComponents do
         disabled={@room_user.is_editor}
         phx-value-id={@room_user.id}
         phx-click="request_edit"
+        title="Raise hand"
       />
       <.action_bar_button
         :if={@room_user.requesting_edit == true}
@@ -228,6 +244,7 @@ defmodule VoidWeb.Room.RoomComponents do
         phx-value-id={@room_user.id}
         phx-click="cancel_request_edit"
         class="text-amber-500"
+        title="Lower hand"
       />
       <.action_bar_button
         :if={@room_user.is_owner}
@@ -236,6 +253,7 @@ defmodule VoidWeb.Room.RoomComponents do
         disabled={@room_user.is_editor}
         phx-value-id={@room_user.id}
         phx-click="grant_edit"
+        title="Become editor"
       />
     </ul>
     """

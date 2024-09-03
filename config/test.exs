@@ -21,7 +21,8 @@ config :void, Void.Repo,
 config :void, VoidWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "Dxma/E6XVklbqycHwIaqqyMmvKSiBFKEq2ieOzE8YsgMyW0+bPaS9sRlrALPY4EF",
-  server: false
+  server: true,
+  debug_errors: true
 
 # In test we don't send emails.
 config :void, Void.Mailer, adapter: Swoosh.Adapters.Test

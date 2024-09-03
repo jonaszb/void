@@ -6,11 +6,8 @@ defmodule VoidWeb.GithubAuth do
 
   # http://localhost:4000/auth/github
   def request(conn, params) do
-    IO.inspect(Application.get_env(:assent, :github))
-
     Application.get_env(:assent, :github)
     |> Github.authorize_url()
-    |> IO.inspect(label: "authorize_url")
     |> case do
       {:ok, %{url: url, session_params: session_params}} ->
         # Session params (used for OAuth 2.0 and OIDC strategies) will be
@@ -50,7 +47,6 @@ defmodule VoidWeb.GithubAuth do
     # Session params should be added to the config so the strategy can use them
     |> Config.put(:session_params, session_params)
     |> Github.callback(params)
-    |> IO.inspect(label: "callback params")
     |> case do
       {:ok, %{user: user, token: token}} ->
         # Authorization succesful

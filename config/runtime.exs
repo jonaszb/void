@@ -30,6 +30,11 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
+  config :assent, :github,
+    client_id: System.fetch_env!("GITHUB_CLIENT_ID"),
+    client_secret: System.fetch_env!("GITHUB_CLIENT_SECRET"),
+    redirect_uri: "#{System.fetch_env!("BASE_URL")}/auth/github/callback"
+
   config :void, Void.Repo,
     # ssl: true,
     url: database_url,
