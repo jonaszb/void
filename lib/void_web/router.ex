@@ -2,6 +2,7 @@ defmodule VoidWeb.Router do
   use VoidWeb, :router
 
   import VoidWeb.UserAuth
+  import Config, only: [config_env: 0]
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -36,7 +37,7 @@ defmodule VoidWeb.Router do
   # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:void, :dev_routes) do
+  if Mix.env() == :test or Application.compile_env(:void, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
     # it behind authentication and allow only admins to access it.
     # If your application does not have an admins-only section yet,

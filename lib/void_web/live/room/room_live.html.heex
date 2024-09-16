@@ -12,7 +12,7 @@
       <.action_bar room_user={@room_user} />
       <span class="flex items-center">
         <.theme_toggle class="mr-4 md:mr-8" />
-        <.link href={~p"/"}>
+        <.link href={~p"/"} title="Exit room">
           <.icon
             name="hero-arrow-right-end-on-rectangle"
             class="text-gray-500 hover:text-red-500 w-6"
@@ -22,6 +22,7 @@
     </div>
     <div
       :if={@room_user.is_editor == false}
+      id="editor-lock"
       class="absolute left-1/2 -bottom-6 z-10 bg-amber-500 rounded-full p-2 scale-110 hidden"
       phx-remove={
         JS.hide(
