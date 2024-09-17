@@ -4,8 +4,8 @@ defmodule Void.Rooms.Message do
 
   schema "messages" do
     field :content, :string
-    field :room_id, Ecto.UUID
-    field :user_id, :id
+    belongs_to :room, Void.Rooms.Room, type: :binary_id
+    belongs_to :user, Void.Rooms.RoomUser, type: :id
 
     timestamps(type: :utc_datetime)
   end
@@ -15,5 +15,7 @@ defmodule Void.Rooms.Message do
     message
     |> cast(attrs, [:content])
     |> validate_required([:content])
+    |> validate_length(:content, min: 1)
+    |> validate_length(:content, max: 1000)
   end
 end

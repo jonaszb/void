@@ -14,8 +14,6 @@ defmodule Void.Rooms do
   end
 
   def list_room_states_for_user(user_id) do
-    IO.inspect(user_id)
-
     Repo.all(
       from rs in RoomState, where: rs.owner_id == ^user_id, order_by: [desc: rs.updated_at]
     )

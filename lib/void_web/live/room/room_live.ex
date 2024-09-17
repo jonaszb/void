@@ -1,9 +1,12 @@
 defmodule VoidWeb.RoomLive do
   # alias Phoenix.LiveView
+  alias Expo.Message
+  alias Void.Messages
   alias Void.Accounts
   alias Void.RoomStates
   alias Void.RoomUsers
   alias Void.Rooms.RoomState
+  alias Void.Rooms.Message
   use VoidWeb, :live_view
   alias Void.Rooms
   alias VoidWeb.Presence
@@ -58,11 +61,13 @@ defmodule VoidWeb.RoomLive do
     case Rooms.user_can_access_room(current_user, room_uuid) do
       {:ok, true} ->
         room = Rooms.get_room_by_uuid(room_uuid)
+        messages = Messages.get_messages(room_uuid)
         room_users = Rooms.get_room_users(room)
         room_state = RoomStates.get_room_state(room_uuid)
         this_room_user = get_current_room_user(room_users, current_user)
-
+        IO.inspect(this_room_user)
         presences = track_presence(room_uuid, this_room_user)
+        Phoenix.PubSub.subscribe(Void.PubSub, "messages:#{room_uuid}")
         Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
         Phoenix.PubSub.subscribe(Void.PubSub, "room-users:#{room_uuid}")
 
@@ -70,10 +75,15 @@ defmodule VoidWeb.RoomLive do
           Phoenix.PubSub.subscribe(Void.PubSub, "access-request:#{room_uuid}")
         end
 
+        message_user_data = %Message{user_id: this_room_user.id, room_id: room_uuid}
+
         socket = assign(socket, presences: presences)
 
         assign(socket,
           room: room,
+          messages: messages,
+          message_user_data: message_user_data,
+          message_form: to_form(Message.changeset(message_user_data, %{content: ""})),
           active_tab: :users,
           room_users: room_users,
           room_user: this_room_user,
@@ -142,7 +152,6 @@ defmodule VoidWeb.RoomLive do
   end
 
   def handle_event("validate_room_state_form", params, socket) do
-    IO.inspect(params)
     %{"room_state" => room_state} = params
 
     room_state_form =
@@ -152,6 +161,30 @@ defmodule VoidWeb.RoomLive do
       |> to_form()
 
     {:noreply, assign(socket, room_state_form: room_state_form)}
+  end
+
+  def handle_event("validate_message", params, socket) do
+    %{"message" => message} = params
+
+    message_form =
+      socket.assigns.message_user_data
+      |> Message.changeset(message)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, message_form: message_form)}
+  end
+
+  def handle_event("send_message", params, socket) do
+    %{"message" => message} = params
+
+    IO.inspect(
+      socket.assigns.message_user_data
+      |> Message.changeset(message)
+      |> Messages.add_message()
+    )
+
+    {:noreply, socket}
   end
 
   def handle_event("request_edit", %{"id" => user_id}, socket) do

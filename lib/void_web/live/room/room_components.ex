@@ -60,9 +60,16 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def chat_section(assigns) do
     ~H"""
-    <div class="flex items-center justify-center text-3xl text-gray-500 font-work mt-24">
-      <h2 class="text-center">COMING <br />SOON</h2>
-    </div>
+    <section class="p-4 ">
+      <ul class="flex flex-col-reverse overflow-scroll max-h-[calc(100vh-12rem)] border-b-2 border-zinc-500/50">
+        <%= for message <- @messages do %>
+          <li class="py-5"><%= message.content %></li>
+        <% end %>
+      </ul>
+      <.form for={@message_form} phx-submit="send_message" phx-change="validate_message">
+        <.input placeholder="Type a message" field={@message_form[:content]} />
+      </.form>
+    </section>
     """
   end
 
