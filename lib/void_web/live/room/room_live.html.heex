@@ -1,6 +1,9 @@
 <main
   id="room"
-  class="w-screen h-screen text-blue-950 dark:text-blue-50 grid grid-cols-[1fr,18rem] grid-rows-[5rem,1fr] lg:grid-cols-[1fr,22rem] xl:grid-cols-[1fr,26rem] bg-zinc-50 dark:bg-zinc-950"
+  class={[
+    "w-screen h-screen text-blue-950 dark:text-blue-50 grid grid-cols-[1fr,18rem] grid-rows-[5rem,1fr] lg:grid-cols-[1fr,22rem] xl:grid-cols-[1fr,26rem] bg-zinc-50 dark:bg-zinc-950 transition-all",
+    @active_tab == nil && "!grid-cols-[1fr,5rem]"
+  ]}
 >
   <header class="flex px-2 md:px-4 justify-between font-work col-start-1 col-span-2 md:col-span-1 relative">
     <div class="flex gap-4 items-center ">
@@ -42,23 +45,32 @@
       <.icon name="hero-lock-closed" class="text-white w-6" />
     </div>
   </header>
-  <aside class="bg-zinc-50 dark:bg-zinc-900 border-l-2 border-zinc-500/50 shadow row-span-2 w-full hidden md:block">
+  <aside class="bg-zinc-50 dark:bg-zinc-900 border-l-2 border-zinc-500/50 shadow row-span-2 w-full z-50 hidden md:block relative @container">
     <.nav_menu is_owner={@room_user.is_owner} active_tab={@active_tab} />
-    <.users_section
-      :if={@active_tab == :users}
-      room_users={@room_users}
-      presences={@presences}
-      current_user={@room_user}
-    />
-    <.chat_section :if={@active_tab == :chat} />
-    <.settings_section
-      :if={@active_tab == :settings}
-      room_state_form={@room_state_form}
-      supported_languages={get_supported_languages()}
-    />
+    <div class="hidden @[200px]:block">
+      <.users_section
+        :if={@active_tab == :users}
+        room_users={@room_users}
+        presences={@presences}
+        current_user={@room_user}
+      />
+      <.chat_section :if={@active_tab == :chat} />
+      <.settings_section
+        :if={@active_tab == :settings}
+        room_state_form={@room_state_form}
+        supported_languages={get_supported_languages()}
+      />
+    </div>
+    <button
+      phx-click="select_tab"
+      phx-value-tab_name="nil"
+      class="bg-zinc-50 dark:bg-zinc-900 hover:brightness-110 absolute left-0 -translate-x-1/2 bottom-32 px-1 py-3 rounded border-2 border-zinc-500/50 z-50 transition-all hidden md:block"
+    >
+      <.icon name="hero-chevron-double-right" class="-rotate-180 @[200px]:rotate-0" />
+    </button>
   </aside>
 
-  <section class="h-full col-start-1 col-span-2 md:col-span-1 border border-gray-500/35 overflow-hidden mx-1">
+  <section class="h-full col-start-1 col-span-2 md:col-span-1 border border-gray-500/35 mx-1 relative">
     <div id="editor-container" class="h-full" phx-update="ignore">
       <div
         class="h-full"

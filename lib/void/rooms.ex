@@ -22,14 +22,7 @@ defmodule Void.Rooms do
   end
 
   def get_room_by_uuid(room_uuid) do
-    query =
-      from r in Room,
-        join: u in User,
-        on: r.owner_id == u.id,
-        where: r.room_id == ^room_uuid,
-        select: {r, u.display_name}
-
-    Repo.one(query)
+    Repo.one(from r in Room, where: r.room_id == ^room_uuid)
   end
 
   def get_room_users(room) do
@@ -44,7 +37,17 @@ defmodule Void.Rooms do
   def get_room_user(uuid, room_id), do: Repo.get_by(RoomUser, user_id: uuid, room_id: room_id)
 
   def delete_room(room) do
-    Repo.delete(room)
+    del = Repo.delete(room)
+
+    case del do
+      {:ok, deleted_room} ->
+        broadcast("room-state:#{room.room_id}", {:room_deleted, deleted_room})
+
+      _ ->
+        nil
+    end
+
+    del
   end
 
   def room_exists?(room_uuid) do
@@ -100,7 +103,8 @@ defmodule Void.Rooms do
       room_attrs = %{owner_id: user.id, room_id: room_id}
 
       room_state_attrs = %{
-        content: "// Welcome to #{room_name}!",
+        contents: "// Welcome to #{room_name}!",
+        language: "typescript",
         name: room_name,
         room_id: room_id,
         owner_id: user.id

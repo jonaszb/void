@@ -11,7 +11,7 @@ defmodule VoidWeb.RoomLive do
   import VoidWeb.Logos
   import VoidWeb.Room.RoomComponents
 
-  @sidebar_tabs ["chat", "users", "settings"]
+  @sidebar_tabs ["chat", "users", "settings", "nil"]
   @supported_languages [
     {"Bash", "shell"},
     {"C", "c"},
@@ -45,74 +45,46 @@ defmodule VoidWeb.RoomLive do
         %{"user_token" => user_token},
         %{assigns: %{current_user: nil}} = socket
       ) do
-    socket =
-      case Rooms.user_can_access_room(user_token, room_uuid) do
-        {:ok, true} ->
-          {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
-          room_users = Rooms.get_room_users(room)
-          room_state = RoomStates.get_room_state(room_uuid)
-          this_room_user = get_current_room_user(room_users, user_token)
-          presences = track_presence(room_uuid, this_room_user)
-          Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
-          Phoenix.PubSub.subscribe(Void.PubSub, "room-users:#{room_uuid}")
-
-          socket = assign(socket, presences: presences)
-
-          assign(socket,
-            room: room,
-            owner_name: owner_name,
-            active_tab: :users,
-            room_users: room_users,
-            room_user: this_room_user,
-            room_state: room_state,
-            room_state_form: to_form(RoomState.changeset(room_state, %{})),
-            presences: presences
-          )
-
-        _ ->
-          push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
-      end
-
+    socket = socket |> setup_or_redirect(user_token, room_uuid)
     {:ok, socket, layout: false}
   end
 
   def mount(%{"room" => room_uuid}, _session, %{assigns: %{current_user: current_user}} = socket) do
-    socket =
-      case Rooms.user_can_access_room(current_user, room_uuid) do
-        {:ok, true} ->
-          {room, owner_name} = Rooms.get_room_by_uuid(room_uuid)
-          room_users = Rooms.get_room_users(room)
-          room_state = RoomStates.get_room_state(room_uuid)
-          this_room_user = get_current_room_user(room_users, current_user)
-
-          presences = track_presence(room_uuid, this_room_user)
-          Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
-          Phoenix.PubSub.subscribe(Void.PubSub, "room-users:#{room_uuid}")
-
-          is_owner = room.owner_id == current_user.id
-
-          if is_owner do
-            Phoenix.PubSub.subscribe(Void.PubSub, "access-request:#{room_uuid}")
-          end
-
-          socket = assign(socket, presences: presences)
-
-          assign(socket,
-            room: room,
-            owner_name: owner_name,
-            active_tab: :users,
-            room_users: room_users,
-            room_user: this_room_user,
-            room_state: room_state,
-            room_state_form: to_form(RoomState.changeset(room_state, %{})),
-            presences: presences
-          )
-
-        _ ->
-          push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
-      end
-
+    socket = socket |> setup_or_redirect(current_user, room_uuid)
     {:ok, socket, layout: false}
+  end
+
+  defp setup_or_redirect(socket, current_user, room_uuid) do
+    case Rooms.user_can_access_room(current_user, room_uuid) do
+      {:ok, true} ->
+        room = Rooms.get_room_by_uuid(room_uuid)
+        room_users = Rooms.get_room_users(room)
+        room_state = RoomStates.get_room_state(room_uuid)
+        this_room_user = get_current_room_user(room_users, current_user)
+
+        presences = track_presence(room_uuid, this_room_user)
+        Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
+        Phoenix.PubSub.subscribe(Void.PubSub, "room-users:#{room_uuid}")
+
+        if this_room_user.is_owner == true do
+          Phoenix.PubSub.subscribe(Void.PubSub, "access-request:#{room_uuid}")
+        end
+
+        socket = assign(socket, presences: presences)
+
+        assign(socket,
+          room: room,
+          active_tab: :users,
+          room_users: room_users,
+          room_user: this_room_user,
+          room_state: room_state,
+          room_state_form: to_form(RoomState.changeset(room_state, %{})),
+          presences: presences
+        )
+
+      _ ->
+        push_navigate(socket, to: ~p"/rooms/#{room_uuid}/lobby")
+    end
   end
 
   defp get_current_room_user(room_users, current_user) when is_binary(current_user) do
@@ -197,6 +169,10 @@ defmodule VoidWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("select_tab", %{"tab_name" => "nil"}, %{assigns: %{active_tab: nil}} = socket) do
+    {:noreply, assign(socket, active_tab: :users)}
+  end
+
   def handle_event("select_tab", %{"tab_name" => tab_name}, socket)
       when tab_name in @sidebar_tabs do
     {:noreply, assign(socket, active_tab: String.to_atom(tab_name))}
@@ -259,5 +235,12 @@ defmodule VoidWeb.RoomLive do
      assign(socket,
        room_state: room_state
      )}
+  end
+
+  def handle_info({:room_deleted, _}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:error, "Room #{socket.assigns.room_state.name} has been deleted.")
+     |> redirect(to: ~p"/")}
   end
 end

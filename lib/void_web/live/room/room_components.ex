@@ -3,11 +3,12 @@ defmodule VoidWeb.Room.RoomComponents do
   import VoidWeb.CoreComponents
 
   attr :is_owner, :boolean, required: true
+  attr :active_tab, :atom, required: true
 
   def nav_menu(assigns) do
     ~H"""
-    <nav id="sidebar-tabs" role="tablist" class="border-b-2 border-zinc-500/50">
-      <ul class="grid grid-flow-col">
+    <nav id="sidebar-tabs" role="tablist" class="@[200px]:border-b-2 border-zinc-500/50">
+      <ul class="grid @[200px]:grid-flow-col">
         <.nav_menu_item
           name="hero-chat-bubble-left-right"
           tab_name={:chat}
@@ -39,7 +40,7 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def nav_menu_item(assigns) do
     ~H"""
-    <li role="tab" {@rest} class="border-zinc-500/50 [&:not(:last-child)]:border-r-2">
+    <li role="tab" {@rest} class="border-zinc-500/50 @[200px]:[&:not(:last-child)]:border-r-2">
       <a
         class="py-7  flex justify-center cursor-pointer transition-all group hover:brightness-105"
         phx-value-tab_name={@tab_name}
@@ -49,7 +50,7 @@ defmodule VoidWeb.Room.RoomComponents do
           name={@name}
           class={[
             "h-6 transition-all group-hover:scale-110 group-hover:text-amber-500",
-            @is_active == true && "text-amber-500 scale-110"
+            @is_active == true && "@[200px]:text-amber-500 @[200px]:scale-110"
           ]}
         />
       </a>

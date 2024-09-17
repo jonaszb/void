@@ -10,15 +10,15 @@ defmodule VoidWeb.Testimonial do
   def testimonial(assigns) do
     ~H"""
     <div {@rest}>
-      <figure class="flex md:flex-row flex-col bg-amber-50 rounded-xl p-4 md:p-0 dark:bg-gray-900 shadow-lg overflow-hidden md:min-w-[640px] items-center">
+      <figure class="flex lg:flex-row flex-col bg-amber-50 rounded-xl p-4 lg:p-0 dark:bg-gray-900 shadow-lg overflow-hidden lg:min-w-[640px] items-center">
         <div class="w-48 min-w-48 flex items-center justify-center">
           <img
-            class="rounded-full md:rounded-none w-full object-cover h-48 overflow-hidden"
+            class="rounded-full lg:rounded-none w-full object-cover h-48 overflow-hidden"
             src={@img}
             alt=""
           />
         </div>
-        <div class="pt-6 md:p-8 text-center md:text-left space-y-4">
+        <div class="pt-6 md:p-8 text-center lg:text-left space-y-4">
           <blockquote>
             <p class="text-lg font-medium text-blue-950 dark:text-blue-100">
               <%= render_slot(@content) %>
