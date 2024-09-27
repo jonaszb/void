@@ -2,7 +2,6 @@ defmodule VoidWeb.Router do
   use VoidWeb, :router
 
   import VoidWeb.UserAuth
-  import Config, only: [config_env: 0]
 
   pipeline :browser do
     plug :accepts, ["html"]

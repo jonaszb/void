@@ -65,7 +65,6 @@ defmodule VoidWeb.RoomLive do
         room_users = Rooms.get_room_users(room)
         room_state = RoomStates.get_room_state(room_uuid)
         this_room_user = get_current_room_user(room_users, current_user)
-        IO.inspect(this_room_user)
         presences = track_presence(room_uuid, this_room_user)
         Phoenix.PubSub.subscribe(Void.PubSub, "messages:#{room_uuid}")
         Phoenix.PubSub.subscribe(Void.PubSub, "room-state:#{room_uuid}")
@@ -76,13 +75,14 @@ defmodule VoidWeb.RoomLive do
         end
 
         message_user_data = %Message{user_id: this_room_user.id, room_id: room_uuid}
-
         socket = assign(socket, presences: presences)
 
         assign(socket,
           room: room,
-          messages: messages,
           message_user_data: message_user_data,
+          messages: messages,
+          message_counter: 0,
+          users_counter: 0,
           message_form: to_form(Message.changeset(message_user_data, %{content: ""})),
           active_tab: :users,
           room_users: room_users,
@@ -175,16 +175,19 @@ defmodule VoidWeb.RoomLive do
     {:noreply, assign(socket, message_form: message_form)}
   end
 
+  def handle_event("send_message", %{"message" => %{content: ""}}, socket), do: {:noreply, socket}
+
   def handle_event("send_message", params, socket) do
     %{"message" => message} = params
 
-    IO.inspect(
-      socket.assigns.message_user_data
-      |> Message.changeset(message)
-      |> Messages.add_message()
-    )
+    socket.assigns.message_user_data
+    |> Message.changeset(message)
+    |> Messages.add_message()
 
-    {:noreply, socket}
+    {:noreply,
+     assign(socket,
+       message_form: to_form(Message.changeset(socket.assigns.message_user_data, %{content: ""}))
+     )}
   end
 
   def handle_event("request_edit", %{"id" => user_id}, socket) do
@@ -203,11 +206,18 @@ defmodule VoidWeb.RoomLive do
   end
 
   def handle_event("select_tab", %{"tab_name" => "nil"}, %{assigns: %{active_tab: nil}} = socket) do
-    {:noreply, assign(socket, active_tab: :users)}
+    handle_event("select_tab", %{"tab_name" => "users"}, socket)
   end
 
   def handle_event("select_tab", %{"tab_name" => tab_name}, socket)
       when tab_name in @sidebar_tabs do
+    socket =
+      case tab_name do
+        "chat" -> assign(socket, message_counter: 0)
+        "users" -> assign(socket, users_counter: 0)
+        _ -> socket
+      end
+
     {:noreply, assign(socket, active_tab: String.to_atom(tab_name))}
   end
 
@@ -219,6 +229,12 @@ defmodule VoidWeb.RoomLive do
   end
 
   def handle_info({:access_requested, _room_user}, socket) do
+    socket =
+      case socket.assigns.active_tab do
+        :users -> socket
+        _ -> update(socket, :users_counter, &(&1 + 1))
+      end
+
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
   end
 
@@ -275,5 +291,15 @@ defmodule VoidWeb.RoomLive do
      socket
      |> put_flash(:error, "Room #{socket.assigns.room_state.name} has been deleted.")
      |> redirect(to: ~p"/")}
+  end
+
+  def handle_info({:new_message, message}, socket) do
+    socket =
+      case socket.assigns.active_tab do
+        :chat -> socket
+        _ -> update(socket, :message_counter, &(&1 + 1))
+      end
+
+    {:noreply, assign(socket, messages: [message | socket.assigns.messages])}
   end
 end
