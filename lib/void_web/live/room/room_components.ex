@@ -63,14 +63,9 @@ defmodule VoidWeb.Room.RoomComponents do
       >
         <.icon
           name={@name}
-          class={[
-            "h-6 transition-all group-hover:scale-110 group-hover:text-amber-500",
-            @is_active == true && "@[200px]:text-amber-500 @[200px]:scale-110"
-          ]}
+          class={"h-6 transition-all group-hover:scale-110 group-hover:text-amber-500 #{if @is_active == true, do: "@[200px]:text-amber-500 @[200px]:scale-110"}"}
         />
       </a>
-      <%!-- <%= if @counter > 0 do %> --%>
-      <%!-- <% end %> --%>
     </li>
     """
   end
@@ -157,6 +152,8 @@ defmodule VoidWeb.Room.RoomComponents do
   end
 
   attr :current_user, :map, required: true
+  attr :room_users, :map, required: true
+  attr :presences, :map, required: true
 
   def users_section(assigns) do
     assigns =
@@ -317,20 +314,17 @@ defmodule VoidWeb.Room.RoomComponents do
   end
 
   attr :name, :string, required: true
+  attr :disabled, :boolean, default: false
   attr :danger, :boolean, default: false
   attr :class, :string, default: ""
   attr :rest, :global
 
   def action_bar_button(assigns) do
     ~H"""
-    <button {@rest} class={"group #{@class}"}>
+    <button disabled={@disabled} {@rest} class={"group #{@class}"}>
       <.icon
         name={@name}
-        class={[
-          "w-5 group-disabled:text-gray-500/50 transition-all",
-          @danger == true && "text-red-500",
-          @danger == false && "hover:text-amber-500 "
-        ]}
+        class={"w-5 group-disabled:text-gray-500/50 transition-all #{if @danger, do: "text-red-500", else: "hover:text-amber-500" }"}
       />
     </button>
     """

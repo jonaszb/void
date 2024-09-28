@@ -1,13 +1,7 @@
 defmodule Void.Messages do
   import Ecto.Query, warn: false
   alias Void.Rooms.Message
-  alias Phoenix.PubSub
-  alias Void.Rooms.RoomUser
-  alias Void.Rooms.RoomState
-  alias Ecto.Multi
   alias Void.Repo
-  alias Void.Rooms.Room
-  alias Void.Accounts.User
 
   def broadcast({:ok, message}, event) do
     Phoenix.PubSub.broadcast(

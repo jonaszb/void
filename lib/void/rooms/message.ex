@@ -4,7 +4,8 @@ defmodule Void.Rooms.Message do
 
   schema "messages" do
     field :content, :string
-    belongs_to :room, Void.Rooms.Room, type: :binary_id
+
+    belongs_to :room, Void.Rooms.Room, type: :binary_id, references: :room_id
     belongs_to :user, Void.Rooms.RoomUser, type: :id
 
     timestamps(type: :utc_datetime)

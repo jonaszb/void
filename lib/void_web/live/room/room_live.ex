@@ -1,5 +1,4 @@
 defmodule VoidWeb.RoomLive do
-  # alias Phoenix.LiveView
   alias Expo.Message
   alias Void.Messages
   alias Void.Accounts
