@@ -104,5 +104,19 @@
       >
       </div>
     </div>
+    <div
+      id="notifications-container"
+      class="absolute z-50 bottom-0 right-4 p-4 flex-col-reverse gap-2 transition-all hidden sm:flex"
+    >
+      <%= for n <- @notifications do %>
+        <.live_component
+          module={NotificationComponent}
+          id={n.id}
+          message={n.message}
+          type={n.type}
+          user={n.user}
+        />
+      <% end %>
+    </div>
   </section>
 </main>

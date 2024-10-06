@@ -1,4 +1,5 @@
 defmodule VoidWeb.RoomLive do
+  alias Void.Rooms.RoomUser
   alias Expo.Message
   alias Void.Messages
   alias Void.Accounts
@@ -12,6 +13,7 @@ defmodule VoidWeb.RoomLive do
   import VoidWeb.ThemeToggle
   import VoidWeb.Logos
   import VoidWeb.Room.RoomComponents
+  alias VoidWeb.NotificationComponent
 
   @sidebar_tabs ["chat", "users", "settings", "nil"]
   @supported_languages [
@@ -88,7 +90,9 @@ defmodule VoidWeb.RoomLive do
           room_user: this_room_user,
           room_state: room_state,
           room_state_form: to_form(RoomState.changeset(room_state, %{})),
-          presences: presences
+          presences: presences,
+          notifications: [],
+          notification_counter: 0
         )
 
       _ ->
@@ -135,6 +139,15 @@ defmodule VoidWeb.RoomLive do
   def handle_event("deny_access", %{"id" => id}, socket) do
     Rooms.deny_user_access(id)
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
+  end
+
+  def handle_event(
+        "grant_access",
+        %{"id" => id, "notification_id" => notification_id} = params,
+        socket
+      ) do
+    {:noreply, socket} = handle_event("remove_notification", %{"id" => notification_id}, socket)
+    handle_event("grant_access", %{"id" => id}, socket)
   end
 
   def handle_event("grant_access", %{"id" => id}, socket) do
@@ -221,17 +234,37 @@ defmodule VoidWeb.RoomLive do
   end
 
   @impl true
+  def handle_event("notification_action", %{"id" => id, "action" => action}, socket) do
+    IO.inspect("Action button clicked for notification #{id} with action #{action}")
+    {:noreply, socket}
+  end
+
+  def handle_event("remove_notification", %{"id" => id}, socket) do
+    notifications =
+      Enum.reject(socket.assigns.notifications, fn %{id: notif_id} -> notif_id == id end)
+
+    {:noreply, assign(socket, notifications: notifications)}
+  end
+
+  @impl true
   def handle_info(%{event: "presence_diff", payload: _diff}, socket) do
     topic = "room:#{socket.assigns.room.room_id}"
     presences = Presence.list(topic)
     {:noreply, assign(socket, presences: presences)}
   end
 
-  def handle_info({:access_requested, _room_user}, socket) do
+  def handle_info({:access_requested, room_user}, socket) do
     socket =
       case socket.assigns.active_tab do
-        :users -> socket
-        _ -> update(socket, :users_counter, &(&1 + 1))
+        :users ->
+          socket
+
+        # |> add_notification(%{type: :access_requested, user: room_user})
+
+        _ ->
+          socket
+          |> update(:users_counter, &(&1 + 1))
+          |> add_notification(%{type: :access_requested, user: room_user})
       end
 
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
@@ -244,6 +277,12 @@ defmodule VoidWeb.RoomLive do
         if ru.id == room_user.id, do: room_user, else: ru
       end)
 
+    socket =
+      case room_user.requesting_edit do
+        true -> socket |> add_notification(%{type: :hand_raised, user: room_user})
+        false -> socket
+      end
+
     room_user =
       case room_user.user_id == socket.assigns.room_user.user_id do
         true -> room_user
@@ -255,6 +294,16 @@ defmodule VoidWeb.RoomLive do
 
   def handle_info({:edit_granted, room_users}, socket) do
     this_room_user = get_current_room_user(room_users, socket.assigns.room_user.user_id)
+
+    socket =
+      case(Enum.find(room_users, fn u -> u.is_editor end)) do
+        nil ->
+          socket
+
+        editor ->
+          socket
+          |> add_notification(%{type: :new_editor, user: editor})
+      end
 
     socket =
       push_event(socket, "set_read_only", %{
@@ -295,10 +344,52 @@ defmodule VoidWeb.RoomLive do
   def handle_info({:new_message, message}, socket) do
     socket =
       case socket.assigns.active_tab do
-        :chat -> socket
-        _ -> update(socket, :message_counter, &(&1 + 1))
+        :chat ->
+          socket
+
+        _ ->
+          socket
+          |> update(:message_counter, &(&1 + 1))
+          |> add_notification(%{type: :chat_message, user: message.user, message: message.content})
       end
 
     {:noreply, assign(socket, messages: [message | socket.assigns.messages])}
+  end
+
+  @impl true
+  def handle_info({:new_notification, params}, socket) do
+    id = "notif-" <> Integer.to_string(socket.assigns.notification_counter + 1)
+
+    notification = %{
+      id: id,
+      message: params[:message],
+      type: params[:type] || :info,
+      user: params[:user]
+    }
+
+    notifications = [notification | socket.assigns.notifications]
+
+    {:noreply,
+     assign(socket,
+       notifications: notifications,
+       notification_counter: socket.assigns.notification_counter + 1
+     )}
+  end
+
+  @spec add_notification(Socket.t(), %{
+          message: String.t() | nil,
+          type: Atom.t() | nil,
+          user: RoomUser.t() | nil
+        }) :: Socket.t()
+  def add_notification(
+        socket,
+        params
+      ) do
+    send(
+      self(),
+      {:new_notification, params}
+    )
+
+    socket
   end
 end
