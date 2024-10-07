@@ -69,4 +69,67 @@ Hooks.MonacoEditor = {
     },
 };
 
+Hooks.FormatTimestampsHook = {
+    mounted() {
+        this.formatTimestamps();
+    },
+    updated() {
+        this.formatTimestamps();
+    },
+    formatTimestamps() {
+        const timeElements = this.el.querySelectorAll('time[msg-timestamp]');
+
+        timeElements.forEach((timeElement) => {
+            const timestampIso = timeElement.getAttribute('msg-timestamp');
+            const date = new Date(timestampIso);
+
+            const now = new Date();
+            let formattedDate;
+
+            if (date.toDateString() === now.toDateString()) {
+                formattedDate = new Intl.DateTimeFormat(undefined, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }).format(date);
+            } else if (date.getFullYear() === now.getFullYear()) {
+                formattedDate = new Intl.DateTimeFormat(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }).format(date);
+            } else {
+                formattedDate = new Intl.DateTimeFormat(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }).format(date);
+            }
+            timeElement.textContent = formattedDate;
+        });
+    },
+};
+
+Hooks.Notification = {
+    mounted() {
+        const msgHeight = this.el.getBoundingClientRect().height + 8;
+        const container = document.querySelector('#notifications-container');
+        container.classList.add('transition-none');
+        container.style.transform = `translateY(${msgHeight}px)`;
+        setTimeout(() => {
+            this.el.classList.remove('opacity-0', 'translate-y-full');
+            this.el.classList.add('opacity-100', 'translate-y-0');
+            container.classList.add('transition-all');
+            container.classList.remove('transition-none');
+            container.style.transform = `translateY(0px)`;
+        }, 100);
+
+        setTimeout(() => {
+            this.pushEvent('remove_notification', { id: this.el.id });
+        }, 5500);
+    },
+};
+
 export default Hooks;

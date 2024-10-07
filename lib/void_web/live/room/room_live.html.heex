@@ -1,14 +1,17 @@
 <main
   id="room"
-  class="w-screen h-screen text-blue-950 dark:text-blue-50 grid grid-cols-[1fr,18rem] grid-rows-[5rem,1fr] lg:grid-cols-[1fr,22rem] xl:grid-cols-[1fr,26rem] bg-zinc-50 dark:bg-zinc-950"
+  class={[
+    "w-screen h-screen text-blue-950 dark:text-blue-50 grid grid-cols-[100vw,0px] md:grid-cols-[1fr,18rem] grid-rows-[5rem,1fr] lg:grid-cols-[1fr,22rem] xl:grid-cols-[1fr,26rem] bg-zinc-50 dark:bg-zinc-950 transition-all",
+    @active_tab == nil && "md:!grid-cols-[1fr,5rem]",
+    @active_tab != nil && "maxmd:!grid-cols-[0px,1fr]"
+  ]}
 >
-  <header class="flex px-2 md:px-4 justify-between font-work col-start-1 col-span-2 md:col-span-1 relative">
+  <header class="flex px-2 md:px-4 justify-between font-work relative">
     <div class="flex gap-4 items-center ">
       <.logo_round class="w-12" />
       <h1 class="hidden sm:block text-lg"><%= @room_state.name %></h1>
     </div>
     <div class="flex gap-2">
-      <%!-- <.request_edit_btn room_user={@room_user} /> --%>
       <.action_bar room_user={@room_user} />
       <span class="flex items-center">
         <.theme_toggle class="mr-4 md:mr-8" />
@@ -42,23 +45,53 @@
       <.icon name="hero-lock-closed" class="text-white w-6" />
     </div>
   </header>
-  <aside class="bg-zinc-50 dark:bg-zinc-900 border-l-2 border-zinc-500/50 shadow row-span-2 w-full hidden md:block">
-    <.nav_menu is_owner={@room_user.is_owner} active_tab={@active_tab} />
-    <.users_section
-      :if={@active_tab == :users}
-      room_users={@room_users}
-      presences={@presences}
-      current_user={@room_user}
+  <aside class="bg-zinc-50 dark:bg-zinc-900 border-l-2 border-zinc-500/50 shadow col-start-2 row-span-2 row-start-1 w-full h-full z-50 relative @container">
+    <.nav_menu
+      is_owner={@room_user.is_owner}
+      active_tab={@active_tab}
+      message_counter={@message_counter}
+      users_counter={@users_counter}
     />
-    <.chat_section :if={@active_tab == :chat} />
-    <.settings_section
-      :if={@active_tab == :settings}
-      room_state_form={@room_state_form}
-      supported_languages={get_supported_languages()}
-    />
+    <div class="hidden @[200px]:block h-[calc(100vh-100px)]">
+      <.users_section
+        :if={@active_tab == :users}
+        room_users={@room_users}
+        presences={@presences}
+        current_user={@room_user}
+      />
+      <.chat_section
+        :if={@active_tab == :chat}
+        messages={@messages}
+        message_form={@message_form}
+        user_id={@room_user.id}
+      />
+      <.settings_section
+        :if={@active_tab == :settings}
+        room_state_form={@room_state_form}
+        supported_languages={get_supported_languages()}
+      />
+    </div>
+    <button
+      title="Toggle room menu"
+      phx-click="select_tab"
+      phx-value-tab_name="nil"
+      class="overflow-hidden bg-zinc-50 dark:bg-zinc-900 hover:brightness-110 absolute left-0 bottom-32 w-10 h-[52px] rounded border-2 border-zinc-500/50 z-50 transition-all border-r-transparent -translate-x-full maxmd:@[200px]:-translate-x-1 maxmd:@[200px]:rotate-180"
+    >
+      <% counter_sum = @message_counter + @users_counter %>
+      <div
+        :if={counter_sum > 0 and @active_tab == nil}
+        class="peer bg-red-500 flex h-full justify-center items-center font-bold text-white md:hidden"
+      >
+        <%= if counter_sum > 99, do: "99+", else: counter_sum %>
+      </div>
+      <.icon
+        name="hero-chevron-double-right"
+        class="maxmd:peer-[]:hidden -rotate-180 md:@[200px]:rotate-0 animate-none"
+      />
+    </button>
   </aside>
 
-  <section class="h-full col-start-1 col-span-2 md:col-span-1 border border-gray-500/35 overflow-hidden mx-1">
+  <section class="h-full border border-gray-500/35 mx-1 relative row-start-2">
     <div id="editor-container" class="h-full" phx-update="ignore">
       <div
         class="h-full"
@@ -70,6 +103,20 @@
         data-language={@room_state.language}
       >
       </div>
+    </div>
+    <div
+      id="notifications-container"
+      class="absolute z-50 bottom-0 right-4 p-4 flex-col-reverse gap-2 transition-all hidden sm:flex"
+    >
+      <%= for n <- @notifications do %>
+        <.live_component
+          module={NotificationComponent}
+          id={n.id}
+          message={n.message}
+          type={n.type}
+          user={n.user}
+        />
+      <% end %>
     </div>
   </section>
 </main>

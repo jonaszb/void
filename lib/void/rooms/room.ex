@@ -5,8 +5,9 @@ defmodule Void.Rooms.Room do
 
   schema "rooms" do
     field :owner_id, :id
+    has_many :messages, Void.Rooms.Message, foreign_key: :room_id, on_delete: :delete_all
     has_many :room_users, Void.Rooms.RoomUser, foreign_key: :room_id, on_delete: :delete_all
-    has_many :room_states, Void.Rooms.RoomState, foreign_key: :room_id, on_delete: :delete_all
+    has_one :room_states, Void.Rooms.RoomState, foreign_key: :room_id, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end

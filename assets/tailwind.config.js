@@ -10,6 +10,9 @@ module.exports = {
     content: ['./js/**/*.js', '../lib/void_web.ex', '../lib/void_web/**/*.*ex'],
     theme: {
         extend: {
+            screens: {
+                maxmd: { raw: '(max-width: 768px)' },
+            },
             colors: {
                 brand: '#FD4F00',
             },
@@ -20,6 +23,7 @@ module.exports = {
     },
     plugins: [
         require('@tailwindcss/forms'),
+        require('@tailwindcss/container-queries'),
         // Allows prefixing tailwind classes with LiveView classes to add rules
         // only when LiveView classes are applied, for example:
         //

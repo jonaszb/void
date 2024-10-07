@@ -65,7 +65,7 @@ defmodule VoidWeb.DashboardLive do
     socket =
       case create_room_for_user(socket.assigns.current_user) do
         {:ok, %{room: room}} -> LiveView.push_navigate(socket, to: ~p"/rooms/#{room.room_id}")
-        {:limit, message} -> put_flash(socket, :info, message)
+        {:limit, message} -> put_flash(socket, :error, message)
         {:error, _} -> put_flash(socket, :error, "Failed to create room")
       end
 

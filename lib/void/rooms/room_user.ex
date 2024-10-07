@@ -4,7 +4,8 @@ defmodule Void.Rooms.RoomUser do
   @foreign_key_type :binary_id
 
   schema "room_users" do
-    belongs_to :room, Void.Rooms.Room, type: :binary_id
+    belongs_to :room, Void.Rooms.Room, type: :binary_id, references: :room_id
+    has_many :messages, Void.Rooms.Message, foreign_key: :user_id, on_delete: :nothing
     field :user_id, :binary_id
     field :has_access, :boolean
     field :is_owner, :boolean
