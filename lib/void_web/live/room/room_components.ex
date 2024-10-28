@@ -3,19 +3,24 @@ defmodule VoidWeb.Room.RoomComponents do
   import VoidWeb.CoreComponents
 
   attr :is_owner, :boolean, required: true
+  attr :active_tab, :atom, required: true
+  attr :message_counter, :integer, required: true
+  attr :users_counter, :integer, required: true
 
   def nav_menu(assigns) do
     ~H"""
-    <nav id="sidebar-tabs" role="tablist" class="border-b-2 border-zinc-500/50">
-      <ul class="grid grid-flow-col">
+    <nav id="sidebar-tabs" role="tablist" class="@[200px]:border-b-2 border-zinc-500/50">
+      <ul class="grid @[200px]:grid-flow-col">
         <.nav_menu_item
           name="hero-chat-bubble-left-right"
+          counter={@message_counter}
           tab_name={:chat}
           is_active={@active_tab == :chat}
           title="Chat"
         />
         <.nav_menu_item
           name="hero-users"
+          counter={@users_counter}
           tab_name={:users}
           is_active={@active_tab == :users}
           title="User list"
@@ -35,22 +40,30 @@ defmodule VoidWeb.Room.RoomComponents do
   attr :name, :string, required: true
   attr :is_active, :boolean, required: true
   attr :tab_name, :atom, required: true
+  attr :counter, :integer, default: 0
   attr :rest, :global
 
   def nav_menu_item(assigns) do
     ~H"""
-    <li role="tab" {@rest} class="border-zinc-500/50 [&:not(:last-child)]:border-r-2">
+    <li
+      role="tab"
+      {@rest}
+      class="border-zinc-500/50 @[200px]:[&:not(:last-child)]:border-r-2 relative cursor-pointer"
+    >
+      <span
+        :if={@counter > 0}
+        class="absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-2 text-xs bg-red-500 text-white rounded-lg py-px px-2 z-20 pointer-events-none"
+      >
+        <%= @counter %>
+      </span>
       <a
-        class="py-7  flex justify-center cursor-pointer transition-all group hover:brightness-105"
+        class="py-7  flex justify-center transition-all group hover:brightness-105"
         phx-value-tab_name={@tab_name}
         phx-click="select_tab"
       >
         <.icon
           name={@name}
-          class={[
-            "h-6 transition-all group-hover:scale-110 group-hover:text-amber-500",
-            @is_active == true && "text-amber-500 scale-110"
-          ]}
+          class={"h-6 transition-all group-hover:scale-110 group-hover:text-amber-500 #{if @is_active == true, do: "@[200px]:text-amber-500 @[200px]:scale-110"}"}
         />
       </a>
     </li>
@@ -59,9 +72,48 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def chat_section(assigns) do
     ~H"""
-    <div class="flex items-center justify-center text-3xl text-gray-500 font-work mt-24">
-      <h2 class="text-center">COMING <br />SOON</h2>
-    </div>
+    <section class="p-4 h-full grid grid-rows-[1fr,min-content] grid-cols-1 justify-between">
+      <ul
+        class="flex flex-col-reverse overflow-scroll gap-1 p-4 flex-grow rounded bg-zinc-100 dark:bg-zinc-800 shadow-inner h-full"
+        id="msg-container"
+        phx-hook="FormatTimestampsHook"
+      >
+        <%= for {message, index} <- Enum.with_index(@messages) do %>
+          <% is_mine = message.user_id == @user_id %>
+          <% show_info =
+            index == length(@messages) - 1 || Enum.at(@messages, index + 1).user_id != message.user_id ||
+              minutes_apart(message, Enum.at(@messages, index + 1)) > 15 %>
+          <li class={"flex max-w-[80%] flex-col gap-0.5 #{if is_mine, do: "self-end items-end", else: "self-start items-start"}"}>
+            <span :if={show_info} class="text-xs">
+              <span :if={not is_mine} class="font-bold mr-1">
+                <%= message.user.display_name %>
+              </span>
+              <time msg-timestamp={"#{DateTime.to_iso8601(message.inserted_at)}"}></time>
+            </span>
+            <span class={[
+              "py-2 px-4 rounded-lg break-all",
+              is_mine && "bg-amber-500/25 dark:bg-amber-500/50",
+              not is_mine && "bg-[#cdebf8]/50 dark:bg-[#0d455d]/75"
+            ]}>
+              <%= message.content %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+      <.form for={@message_form} phx-submit="send_message" phx-change="validate_message">
+        <div class="flex gap-2  pt-2">
+          <span class="flex-grow">
+            <.input autocomplete="off" placeholder="Type a message" field={@message_form[:content]} />
+          </span>
+          <button class="w-fit mt-2 group">
+            <.icon
+              name="hero-paper-airplane"
+              class="h-6 transition-all group-hover:scale-110 group-hover:text-amber-500"
+            />
+          </button>
+        </div>
+      </.form>
+    </section>
     """
   end
 
@@ -100,6 +152,8 @@ defmodule VoidWeb.Room.RoomComponents do
   end
 
   attr :current_user, :map, required: true
+  attr :room_users, :map, required: true
+  attr :presences, :map, required: true
 
   def users_section(assigns) do
     assigns =
@@ -260,24 +314,24 @@ defmodule VoidWeb.Room.RoomComponents do
   end
 
   attr :name, :string, required: true
+  attr :disabled, :boolean, default: false
   attr :danger, :boolean, default: false
   attr :class, :string, default: ""
   attr :rest, :global
 
   def action_bar_button(assigns) do
     ~H"""
-    <button {@rest} class={"group #{@class}"}>
+    <button disabled={@disabled} {@rest} class={"group #{@class}"}>
       <.icon
         name={@name}
-        class={[
-          "w-5 group-disabled:text-gray-500/50 transition-all",
-          @danger == true && "text-red-500",
-          @danger == false && "hover:text-amber-500 "
-        ]}
+        class={"w-5 group-disabled:text-gray-500/50 transition-all #{if @danger, do: "text-red-500", else: "hover:text-amber-500" }"}
       />
     </button>
     """
   end
 
   defp get_initial(name), do: name |> String.at(0) |> String.upcase()
+
+  defp minutes_apart(message, next),
+    do: Timex.diff(message.inserted_at, next.inserted_at, :minutes)
 end

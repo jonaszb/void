@@ -9,7 +9,7 @@ defmodule Void.Rooms.RoomState do
     field :formatter, :string
     field :language, :string
     field :contents, :string
-    belongs_to :room, Void.Rooms.Room, type: :binary_id
+    belongs_to :room, Void.Rooms.Room, type: :binary_id, references: :room_id
     field :owner_id, :id
 
     timestamps(type: :utc_datetime)

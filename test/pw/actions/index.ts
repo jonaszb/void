@@ -19,6 +19,10 @@ export default class UserActions {
         await this.page.getByRole('tab', { name: tabName }).click();
     }
 
+    async toggleRoomMenu() {
+        await this.page.getByRole('button', { name: 'Toggle room menu' }).click();
+    }
+
     async requestAccess(name?: string) {
         name && (await this.page.getByRole('textbox').pressSequentially(name, { delay: 25 }));
         await this.page.getByRole('button', { name: 'Request access' }).click();

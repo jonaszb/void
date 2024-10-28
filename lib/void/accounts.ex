@@ -5,6 +5,8 @@ defmodule Void.Accounts do
 
   import Ecto.Query, warn: false
   alias Void.Repo
+  alias Ecto.Multi
+  alias Void.Rooms.RoomUser
 
   alias Void.Accounts.{User, UserToken, UserNotifier}
 
@@ -217,9 +219,9 @@ defmodule Void.Accounts do
       |> User.email_changeset(%{email: email})
       |> User.confirm_changeset()
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, [context]))
+    Multi.new()
+    |> Multi.update(:user, changeset)
+    |> Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, [context]))
   end
 
   @doc ~S"""
@@ -283,9 +285,9 @@ defmodule Void.Accounts do
       |> User.password_changeset(attrs)
       |> User.validate_current_password(password)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
+    Multi.new()
+    |> Multi.update(:user, changeset)
+    |> Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
@@ -293,11 +295,19 @@ defmodule Void.Accounts do
     end
   end
 
-  def update_user_display_name(user, _display_name, attrs) do
+  def update_user_display_name(user, display_name, attrs) do
     changeset = user |> User.display_name_changeset(attrs)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, changeset)
+    room_users_update =
+      from RoomUser, where: [user_id: ^user.uuid], update: [set: [display_name: ^display_name]]
+
+    Multi.new()
+    |> Multi.update(:user, changeset)
+    |> Multi.update_all(
+      :room_user,
+      room_users_update,
+      []
+    )
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
@@ -374,9 +384,9 @@ defmodule Void.Accounts do
   end
 
   defp confirm_user_multi(user) do
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, User.confirm_changeset(user))
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, ["confirm"]))
+    Multi.new()
+    |> Multi.update(:user, User.confirm_changeset(user))
+    |> Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, ["confirm"]))
   end
 
   ## Reset password
@@ -431,9 +441,9 @@ defmodule Void.Accounts do
 
   """
   def reset_user_password(user, attrs) do
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
-    |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
+    Multi.new()
+    |> Multi.update(:user, User.password_changeset(user, attrs))
+    |> Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, :all))
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
