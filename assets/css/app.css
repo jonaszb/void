@@ -25,3 +25,15 @@
 .monaco-editor {
     position: absolute !important;
 }
+
+.cursor {
+    width: 2px;
+    background-color: transparent;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}

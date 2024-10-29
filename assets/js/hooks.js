@@ -1,6 +1,7 @@
 let Hooks = {};
 
 let isReadOnly = false;
+let userColors = {};
 
 Hooks.MonacoEditor = {
     mounted() {
@@ -26,13 +27,61 @@ Hooks.MonacoEditor = {
                 theme,
             });
             this.editor.onDidChangeModelContent((e) => {
+                if (e.isFlush) return; // Do nothing if the change is not caused by this user
                 if (!isReadOnly) {
                     const contents = this.editor.getValue();
                     this.pushEvent('update_room_state', { room_state: { contents } });
                 }
             });
 
+            this.userCursors = {}; // Store other users' cursor decorations
+
+            // Listen for cursor position changes and send to LiveView
+            this.editor.onDidChangeCursorPosition(({ position }) => {
+                this.pushEvent('cursor_position_change', {
+                    lineNumber: position.lineNumber,
+                    column: position.column,
+                });
+            });
+
+            // Listen for incoming cursor positions from other users
+            this.handleEvent('update_cursor_positions', ({ userId, position }) => {
+                if (!userColors.hasOwnProperty(userId)) {
+                    userColors[userId] = getCaretColor();
+                }
+                if (this.userCursors[userId]) {
+                    this.editor.removeContentWidget(this.userCursors[userId]);
+                }
+                const widget = {
+                    getId: () => `cursor-${userId}`,
+                    getDomNode: () => {
+                        const node = document.createElement('div');
+                        node.className = 'cursor blink';
+                        node.style.borderLeft = `2px solid ${userColors[userId]}`;
+                        node.style.height = '1em';
+                        node.style.position = 'absolute';
+                        return node;
+                    },
+                    getPosition: () => {
+                        return {
+                            position: new monaco.Position(position.lineNumber, position.column),
+                            preference: [monaco.editor.ContentWidgetPositionPreference.EXACT],
+                        };
+                    },
+                };
+
+                this.editor.addContentWidget(widget);
+                this.userCursors[userId] = widget;
+            });
+
             window.addEventListener('toggle-darkmode', this.updateTheme.bind(this));
+        });
+
+        this.handleEvent('remove_user_cursor', ({ userId }) => {
+            if (this.userCursors[userId]) {
+                this.editor.removeContentWidget(this.userCursors[userId]);
+                delete this.userCursors[userId];
+            }
         });
 
         this.handleEvent('update_editor', ({ content, language }) => {
@@ -133,3 +182,29 @@ Hooks.Notification = {
 };
 
 export default Hooks;
+
+function getCaretColor() {
+    const colors = [
+        '#FF0000', // Red
+        '#FF7F00', // Orange
+        '#00FF00', // Green
+        '#00FFFF', // Cyan
+        '#8B00FF', // Violet
+        '#FF1493', // Deep Pink
+        '#FF4500', // Orange Red
+        '#32CD32', // Lime Green
+        '#FFD700', // Gold
+        '#00FA9A', // Medium Spring Green
+        '#FF6347', // Tomato
+        '#40E0D0', // Turquoise
+        '#1E90FF', // Dodger Blue
+        '#FF69B4', // Hot Pink
+        '#ADFF2F', // Green Yellow
+        '#FF00FF', // Magenta
+        '#FF8C00', // Dark Orange
+        '#7FFF00', // Chartreuse
+    ];
+
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    return colors[randomIndex];
+}

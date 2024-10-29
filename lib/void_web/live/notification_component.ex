@@ -72,6 +72,30 @@ defmodule VoidWeb.NotificationComponent do
     """
   end
 
+  def render_notification(%{type: :edit_granted} = assigns) do
+    ~H"""
+    <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-blue-500 p-4 shadow-md rounded">
+      <div class="flex-1 w-full flex">
+        <p class="text-zinc-700 dark:text-zinc-300">
+          You are now an editor
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  def render_notification(%{type: :edit_revoked} = assigns) do
+    ~H"""
+    <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-red-500 p-4 shadow-md rounded">
+      <div class="flex-1 w-full flex">
+        <p class="text-zinc-700 dark:text-zinc-300">
+          You are no longer an editor
+        </p>
+      </div>
+    </div>
+    """
+  end
+
   def render_notification(%{type: :access_requested} = assigns) do
     ~H"""
     <div class="flex items-start bg-white dark:bg-zinc-950 p-4 shadow-md rounded">

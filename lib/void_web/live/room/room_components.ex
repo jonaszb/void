@@ -191,22 +191,34 @@ defmodule VoidWeb.Room.RoomComponents do
             <%= if not is_editor?(@room_users, user_uuid) do %>
               <li :if={
                 room_user.id !== @current_user.id and
-                  (@current_user.is_editor or
-                     @current_user.is_owner) and is_editor?(@room_users, user_uuid) == false
+                  @current_user.is_owner and is_editor?(@room_users, user_uuid) == false
               }>
                 <button title="Make editor" phx-value-id={room_user.id} phx-click="grant_edit">
                   <.icon name="hero-pencil" class="text-gray-500 w-5 hover:text-amber-500" />
                 </button>
               </li>
             <% else %>
-              <button
-                title="Make editor"
-                phx-value-id={room_user.id}
-                phx-click="grant_edit"
-                disabled={true}
-              >
-                <.icon name="hero-pencil" class="text-amber-500 w-5" />
-              </button>
+              <%= if @current_user.is_owner and not room_user.is_owner do %>
+                <button
+                  class="group relative w-5 h-8 overflow-hidden"
+                  title="Remove editor"
+                  phx-value-id={room_user.id}
+                  phx-click="revoke_edit"
+                >
+                  <.icon
+                    name="hero-pencil"
+                    class="text-amber-500 w-5 transition-all absolute left-0 -translate-y-1/2 group-hover:-translate-y-8 group-hover:opacity-0 group-hover"
+                  />
+                  <.icon
+                    name="hero-x-mark"
+                    class="text-red-500 w-5 transition-all absolute left-0 translate-y-1/2  opacity-0 group-hover:-translate-y-1/2 group-hover:opacity-100"
+                  />
+                </button>
+              <% else %>
+                <i title="Editor">
+                  <.icon name="hero-pencil" class="text-amber-500 w-5 group-hover:hidden" />
+                </i>
+              <% end %>
             <% end %>
           </ul>
         </li>
@@ -266,28 +278,12 @@ defmodule VoidWeb.Room.RoomComponents do
 
   attr :room_user, :map, required: true
 
-  def request_edit_btn(assigns) do
-    ~H"""
-    <button
-      :if={not @room_user.is_editor}
-      class="btn-primary"
-      phx-click="request_edit"
-      phx-value-id={@room_user.id}
-    >
-      <%!-- <.icon name="hero-hand-raised" class="w-8" /> --%> EDIT
-    </button>
-    """
-  end
-
-  attr :room_user, :map, required: true
-
   def action_bar(assigns) do
     ~H"""
     <ul class="flex gap-2 md:gap-4 px-4 rounded-full border border-gray-500 my-4 items-center dark:text-gray-200 text-gray-700 ">
       <.action_bar_button
         :if={@room_user.requesting_edit == false}
         name="hero-hand-raised"
-        disabled={@room_user.is_editor}
         phx-value-id={@room_user.id}
         phx-click="request_edit"
         title="Raise hand"
@@ -300,7 +296,7 @@ defmodule VoidWeb.Room.RoomComponents do
         class="text-amber-500"
         title="Lower hand"
       />
-      <.action_bar_button
+      <%!-- <.action_bar_button
         :if={@room_user.is_owner}
         name="hero-pencil-solid"
         danger={true}
@@ -308,7 +304,7 @@ defmodule VoidWeb.Room.RoomComponents do
         phx-value-id={@room_user.id}
         phx-click="grant_edit"
         title="Become editor"
-      />
+      /> --%>
     </ul>
     """
   end

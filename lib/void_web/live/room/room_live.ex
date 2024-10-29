@@ -10,6 +10,7 @@ defmodule VoidWeb.RoomLive do
   use VoidWeb, :live_view
   alias Void.Rooms
   alias VoidWeb.Presence
+  alias Phoenix.PubSub
   import VoidWeb.ThemeToggle
   import VoidWeb.Logos
   import VoidWeb.Room.RoomComponents
@@ -92,7 +93,8 @@ defmodule VoidWeb.RoomLive do
           room_state_form: to_form(RoomState.changeset(room_state, %{})),
           presences: presences,
           notifications: [],
-          notification_counter: 0
+          notification_counter: 0,
+          editors: %{}
         )
 
       _ ->
@@ -155,9 +157,28 @@ defmodule VoidWeb.RoomLive do
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
   end
 
+  def handle_event(
+        "update_room_state",
+        %{"room_state" => %{"contents" => contents} = room_state},
+        socket
+      )
+      when contents == "" do
+    handle_event(
+      "update_room_state",
+      %{"room_state" => Map.put(room_state, "contents", " ")},
+      socket
+    )
+  end
+
   def handle_event("update_room_state", %{"room_state" => updated_room_state}, socket) do
+    IO.inspect(socket.assigns.room_user.id)
+
     if(socket.assigns.room_user.is_editor or socket.assigns.room_user.is_owner) do
-      RoomStates.update_room_state(socket.assigns.room_state, updated_room_state)
+      RoomStates.update_room_state(
+        socket.assigns.room_state,
+        updated_room_state,
+        socket.assigns.room_user
+      )
     end
 
     {:noreply, socket}
@@ -214,6 +235,11 @@ defmodule VoidWeb.RoomLive do
 
   def handle_event("grant_edit", %{"id" => user_id}, socket) do
     RoomUsers.grant_edit(user_id)
+    {:noreply, socket}
+  end
+
+  def handle_event("revoke_edit", %{"id" => user_id}, socket) do
+    RoomUsers.revoke_edit(user_id)
     {:noreply, socket}
   end
 
@@ -292,41 +318,64 @@ defmodule VoidWeb.RoomLive do
     {:noreply, assign(socket, room_users: room_users, room_user: room_user)}
   end
 
-  def handle_info({:edit_granted, room_users}, socket) do
-    this_room_user = get_current_room_user(room_users, socket.assigns.room_user.user_id)
-
+  def handle_info({:edit_granted, room_user}, socket)
+      when socket.assigns.room_user.id == room_user.id do
     socket =
-      case(Enum.find(room_users, fn u -> u.is_editor end)) do
-        nil ->
-          socket
-
-        editor ->
-          socket
-          |> add_notification(%{type: :new_editor, user: editor})
-      end
-
-    socket =
-      push_event(socket, "set_read_only", %{
-        read_only: not this_room_user.is_editor
+      update_room_user(socket, room_user)
+      |> push_event("set_read_only", %{
+        read_only: false
       })
+      |> add_notification(%{type: :edit_granted})
 
-    {:noreply, assign(socket, room_users: room_users, room_user: this_room_user)}
+    {:noreply, assign(socket, room_user: room_user)}
   end
 
-  def handle_info({:room_state_updated, room_state}, socket) do
-    socket =
-      case socket.assigns.room_user.is_editor do
-        false ->
-          push_event(socket, "update_editor", %{
-            content: room_state.contents,
-            language: room_state.language
-          })
+  def handle_info({:edit_granted, room_user}, socket) do
+    {:noreply, update_room_user(socket, room_user)}
+  end
 
-        true ->
-          push_event(socket, "update_editor", %{
-            language: room_state.language
-          })
-      end
+  def handle_info({:edit_revoked, room_user}, socket)
+      when socket.assigns.room_user.id == room_user.id do
+    socket =
+      update_room_user(socket, room_user)
+      |> push_event("set_read_only", %{
+        read_only: true
+      })
+      |> add_notification(%{type: :edit_revoked})
+
+    {:noreply, assign(socket, room_user: room_user)}
+  end
+
+  def handle_info({:edit_revoked, room_user}, socket) do
+    socket =
+      socket
+      |> push_event("remove_user_cursor", %{
+        userId: room_user.id
+      })
+      |> update_room_user(room_user)
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:room_state_updated, room_state, updating_user}, socket)
+      when updating_user.id === socket.assigns.room_user.id do
+    socket =
+      push_event(socket, "update_editor", %{
+        language: room_state.language
+      })
+
+    {:noreply,
+     assign(socket,
+       room_state: room_state
+     )}
+  end
+
+  def handle_info({:room_state_updated, room_state, _}, socket) do
+    socket =
+      push_event(socket, "update_editor", %{
+        content: room_state.contents,
+        language: room_state.language
+      })
 
     {:noreply,
      assign(socket,
@@ -391,5 +440,49 @@ defmodule VoidWeb.RoomLive do
     )
 
     socket
+  end
+
+  def update_room_user(socket, room_user) do
+    update(
+      socket,
+      :room_users,
+      &Enum.map(&1, fn ru ->
+        if ru.id == room_user.id, do: room_user, else: ru
+      end)
+    )
+  end
+
+  def handle_event("cursor_position_change", _, socket)
+      when not socket.assigns.room_user.is_editor do
+    {:noreply, socket}
+  end
+
+  def handle_event("cursor_position_change", %{"lineNumber" => line, "column" => column}, socket) do
+    user_id = socket.assigns.room_user.id
+    position = %{lineNumber: line, column: column}
+
+    # Broadcast the cursor position to other users in the room
+    PubSub.broadcast(
+      Void.PubSub,
+      "room-state:#{socket.assigns.room.room_id}",
+      {:cursor_position_update, user_id, position}
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:cursor_position_update, user_id, position}, socket) do
+    socket =
+      if user_id != socket.assigns.room_user.id do
+        # Send update to client for other users' cursors
+        push_event(socket, "update_cursor_positions", %{
+          userId: user_id,
+          position: position
+        })
+      else
+        socket
+      end
+
+    {:noreply, socket}
   end
 end
