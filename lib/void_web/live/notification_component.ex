@@ -1,4 +1,8 @@
 defmodule VoidWeb.NotificationComponent do
+  @moduledoc """
+  Custom notifications in Rooms
+  """
+
   use Phoenix.LiveComponent
   alias Phoenix.LiveView.JS
   import VoidWeb.CoreComponents

@@ -6,6 +6,7 @@ let userColors = {};
 Hooks.MonacoEditor = {
     mounted() {
         const monacoLoader = window.require;
+        this.isRemoteUpdate = false;
 
         monacoLoader.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs' } });
 
@@ -27,11 +28,8 @@ Hooks.MonacoEditor = {
                 theme,
             });
             this.editor.onDidChangeModelContent((e) => {
-                if (e.isFlush) return; // Do nothing if the change is not caused by this user
-                if (!isReadOnly) {
-                    const contents = this.editor.getValue();
-                    this.pushEvent('update_room_state', { room_state: { contents } });
-                }
+                if (e.isFlush || this.isRemoteUpdate || isReadOnly) return; // Do nothing if the change is not caused by this user
+                this.pushEvent('update_editor_state', { changes: e.changes, full_value: this.editor.getValue() });
             });
 
             this.userCursors = {}; // Store other users' cursor decorations
@@ -42,6 +40,26 @@ Hooks.MonacoEditor = {
                     lineNumber: position.lineNumber,
                     column: position.column,
                 });
+            });
+
+            // Listen for incoming changes from LiveView
+            this.handleEvent('apply_changes', (payload) => {
+                const changes = payload.changes.map((change) => ({
+                    range: new monaco.Range(
+                        change.range.startLineNumber,
+                        change.range.startColumn,
+                        change.range.endLineNumber,
+                        change.range.endColumn
+                    ),
+                    text: change.text,
+                    forceMoveMarkers: true,
+                }));
+
+                // Apply the changes to the editor without a full text refresh
+                this.isRemoteUpdate = true;
+                this.editor.getModel().pushEditOperations(this.editor.getSelections(), changes, () => null);
+                // this.editor.executeEdits('remote', changes);
+                this.isRemoteUpdate = false;
             });
 
             // Listen for incoming cursor positions from other users
@@ -56,10 +74,8 @@ Hooks.MonacoEditor = {
                     getId: () => `cursor-${userId}`,
                     getDomNode: () => {
                         const node = document.createElement('div');
-                        node.className = 'cursor blink';
+                        node.className = 'z-[100] bottom-0 absolute h-4 hover:animate-none relative';
                         node.style.borderLeft = `2px solid ${userColors[userId]}`;
-                        node.style.height = '1em';
-                        node.style.position = 'absolute';
                         return node;
                     },
                     getPosition: () => {

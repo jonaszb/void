@@ -1,7 +1,11 @@
 defmodule Void.RoomUsers do
+  @moduledoc """
+  The Room User context.
+  """
+
   import Ecto.Query, warn: false
-  alias Void.Rooms.RoomUser
   alias Void.Repo
+  alias Void.Rooms.RoomUser
 
   def broadcast(message, event \\ :room_user_updated)
 

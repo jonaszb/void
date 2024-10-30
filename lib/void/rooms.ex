@@ -1,12 +1,16 @@
 defmodule Void.Rooms do
+  @moduledoc """
+  The Room context.
+  """
+
   import Ecto.Query, warn: false
-  alias Phoenix.PubSub
-  alias Void.Rooms.RoomUser
-  alias Void.Rooms.RoomState
   alias Ecto.Multi
+  alias Phoenix.PubSub
+  alias Void.Accounts.User
   alias Void.Repo
   alias Void.Rooms.Room
-  alias Void.Accounts.User
+  alias Void.Rooms.RoomState
+  alias Void.Rooms.RoomUser
   @default_room_cap 10
 
   def broadcast(topic, message) do
@@ -181,7 +185,8 @@ defmodule Void.Rooms do
 
   defp maybe_set_expiration_date(%{is_guest: true} = room_user) do
     Ecto.Changeset.change(room_user, %{
-      expires_at: DateTime.utc_now() |> DateTime.add(86400, :second) |> DateTime.truncate(:second)
+      expires_at:
+        DateTime.utc_now() |> DateTime.add(86_400, :second) |> DateTime.truncate(:second)
     })
   end
 
