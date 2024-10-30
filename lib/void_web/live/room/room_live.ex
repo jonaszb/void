@@ -184,22 +184,7 @@ defmodule VoidWeb.RoomLive do
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
   end
 
-  def handle_event(
-        "update_room_state",
-        %{"room_state" => %{"contents" => contents} = room_state},
-        socket
-      )
-      when contents == "" do
-    handle_event(
-      "update_room_state",
-      %{"room_state" => Map.put(room_state, "contents", " ")},
-      socket
-    )
-  end
-
   def handle_event("update_room_state", %{"room_state" => updated_room_state}, socket) do
-    IO.inspect(socket.assigns.room_user.id)
-
     if(socket.assigns.room_user.is_editor or socket.assigns.room_user.is_owner) do
       RoomStates.update_room_state(
         socket.assigns.room_state,
@@ -486,20 +471,27 @@ defmodule VoidWeb.RoomLive do
      )}
   end
 
-  @spec add_notification(Socket.t(), %{
-          message: String.t() | nil,
-          type: Atom.t() | nil,
-          user: RoomUser.t() | nil
-        }) :: Socket.t()
-  def add_notification(
-        socket,
-        params
-      ) do
-    send(
-      self(),
-      {:new_notification, params}
-    )
+  def handle_info({:cursor_position_update, user_id, position}, socket) do
+    socket =
+      if user_id != socket.assigns.room_user.id do
+        push_event(socket, "update_cursor_positions", %{
+          userId: user_id,
+          position: position
+        })
+      else
+        socket
+      end
 
-    socket
+    {:noreply, socket}
+  end
+
+  def handle_info({:editor_updated, _, updating_user}, socket)
+      when updating_user.id == socket.assigns.room_user.id do
+    {:noreply, socket}
+  end
+
+  def handle_info({:editor_updated, changes, _}, socket) do
+    socket = push_event(socket, "apply_changes", %{changes: changes})
+    {:noreply, socket}
   end
 end
