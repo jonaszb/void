@@ -1,4 +1,8 @@
 defmodule VoidWeb.Room.RoomComponents do
+  @moduledoc """
+  Component collection for Rooms
+  """
+
   use Phoenix.Component
   import VoidWeb.CoreComponents
 
@@ -185,13 +189,13 @@ defmodule VoidWeb.Room.RoomComponents do
             </span>
           </span>
           <ul class="flex gap-2 items-center px-2">
-            <li :if={is_requesting_edit?(@room_users, user_uuid)} title="Raised hand">
+            <li :if={requesting_edit?(@room_users, user_uuid)} title="Raised hand">
               <.icon name="hero-hand-raised" class="text-amber-500 w-5" />
             </li>
-            <%= if not is_editor?(@room_users, user_uuid) do %>
+            <%= if not editor?(@room_users, user_uuid) do %>
               <li :if={
                 room_user.id !== @current_user.id and
-                  @current_user.is_owner and is_editor?(@room_users, user_uuid) == false
+                  @current_user.is_owner and editor?(@room_users, user_uuid) == false
               }>
                 <button title="Make editor" phx-value-id={room_user.id} phx-click="grant_edit">
                   <.icon name="hero-pencil" class="text-gray-500 w-5 hover:text-amber-500" />
@@ -266,12 +270,12 @@ defmodule VoidWeb.Room.RoomComponents do
     room_users |> Enum.find(fn ru -> ru.user_id == user_uuid end)
   end
 
-  defp is_requesting_edit?(room_users, user_uuid) do
+  defp requesting_edit?(room_users, user_uuid) do
     user = get_this_room_user(room_users, user_uuid)
     user.requesting_edit
   end
 
-  defp is_editor?(room_users, user_uuid) do
+  defp editor?(room_users, user_uuid) do
     user = get_this_room_user(room_users, user_uuid)
     user.is_editor
   end

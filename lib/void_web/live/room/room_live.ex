@@ -1,20 +1,20 @@
 defmodule VoidWeb.RoomLive do
-  alias Void.Rooms.RoomUser
+  use VoidWeb, :live_view
   alias Expo.Message
-  alias Void.Messages
+  alias Phoenix.PubSub
   alias Void.Accounts
+  alias Void.Messages
+  alias Void.Rooms
+  alias Void.Rooms.Message
+  alias Void.Rooms.RoomState
+  alias Void.Rooms.RoomUser
   alias Void.RoomStates
   alias Void.RoomUsers
-  alias Void.Rooms.RoomState
-  alias Void.Rooms.Message
-  use VoidWeb, :live_view
-  alias Void.Rooms
-  alias VoidWeb.Presence
-  alias Phoenix.PubSub
-  import VoidWeb.ThemeToggle
-  import VoidWeb.Logos
-  import VoidWeb.Room.RoomComponents
   alias VoidWeb.NotificationComponent
+  alias VoidWeb.Presence
+  import VoidWeb.Logos
+  import VoidWeb.ThemeToggle
+  import VoidWeb.Room.RoomComponents
 
   @sidebar_tabs ["chat", "users", "settings", "nil"]
   @supported_languages [
@@ -110,7 +110,7 @@ defmodule VoidWeb.RoomLive do
     Enum.find(room_users, fn u -> u.user_id == current_user.uuid end)
   end
 
-  defp get_supported_languages(), do: @supported_languages
+  defp get_supported_languages, do: @supported_languages
 
   defp track_presence(room_uuid, user) do
     # Track the presence of the user in the room
@@ -289,7 +289,7 @@ defmodule VoidWeb.RoomLive do
 
   @impl true
   def handle_event("notification_action", %{"id" => id, "action" => action}, socket) do
-    IO.inspect("Action button clicked for notification #{id} with action #{action}")
+    # IO.inspect("Action button clicked for notification #{id} with action #{action}")
     {:noreply, socket}
   end
 

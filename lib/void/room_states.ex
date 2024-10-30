@@ -1,6 +1,10 @@
 defmodule Void.RoomStates do
-  alias Void.Rooms.RoomState
+  @moduledoc """
+  The Room State context.
+  """
+
   alias Void.Repo
+  alias Void.Rooms.RoomState
 
   def broadcast({:ok, room_state}, updating_user, event \\ :room_state_updated) do
     Phoenix.PubSub.broadcast(

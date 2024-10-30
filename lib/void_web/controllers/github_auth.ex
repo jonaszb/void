@@ -1,4 +1,8 @@
 defmodule VoidWeb.GithubAuth do
+  @moduledoc """
+  GitHub authentication controller
+  """
+
   import Plug.Conn
 
   alias Assent.{Config, Strategy.Github}
@@ -50,7 +54,7 @@ defmodule VoidWeb.GithubAuth do
     |> case do
       {:ok, %{user: user, token: token}} ->
         # Authorization succesful
-        IO.inspect({user, token}, label: "user and token")
+        # IO.inspect({user, token}, label: "user and token")
 
         user_record = Void.Accounts.get_user_by_email_or_register(user)
 
@@ -63,7 +67,7 @@ defmodule VoidWeb.GithubAuth do
 
       {:error, error} ->
         # Authorizaiton failed
-        IO.inspect(error, label: "error")
+        # IO.inspect(error, label: "error")
 
         conn
         |> put_resp_content_type("text/plain")
@@ -72,10 +76,12 @@ defmodule VoidWeb.GithubAuth do
   end
 
   def fetch_github_user(conn, _opts) do
-    with user when is_map(user) <- get_session(conn, :github_user) do
-      assign(conn, :current_user, %User{email: user["email"]})
-    else
-      _ -> conn
+    case get_session(conn, :github_user) do
+      user when is_map(user) ->
+        assign(conn, :current_user, %User{email: user["email"]})
+
+      _ ->
+        conn
     end
   end
 
