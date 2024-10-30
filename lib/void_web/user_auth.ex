@@ -1,4 +1,9 @@
 defmodule VoidWeb.UserAuth do
+  @moduledoc """
+  User auth handling with OAuth.
+  Email/pwd login is possible in dev/test environments only
+  """
+
   use VoidWeb, :verified_routes
 
   import Plug.Conn

@@ -1,8 +1,8 @@
 defmodule VoidWeb.LobbyLive do
-  alias Void.Accounts.User
   use VoidWeb, :live_view
-  alias Void.Rooms
   alias Void.Accounts
+  alias Void.Accounts.User
+  alias Void.Rooms
 
   def mount(
         %{"room" => room_uuid},

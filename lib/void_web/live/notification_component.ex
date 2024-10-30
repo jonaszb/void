@@ -1,4 +1,8 @@
 defmodule VoidWeb.NotificationComponent do
+  @moduledoc """
+  Custom notifications in Rooms
+  """
+
   use Phoenix.LiveComponent
   alias Phoenix.LiveView.JS
   import VoidWeb.CoreComponents
@@ -66,6 +70,30 @@ defmodule VoidWeb.NotificationComponent do
       <div class="flex-1 w-full flex">
         <p class="text-zinc-700 dark:text-zinc-300">
           <b><%= @user.display_name %></b> is now the editor
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  def render_notification(%{type: :edit_granted} = assigns) do
+    ~H"""
+    <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-blue-500 p-4 shadow-md rounded">
+      <div class="flex-1 w-full flex">
+        <p class="text-zinc-700 dark:text-zinc-300">
+          You are now an editor
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  def render_notification(%{type: :edit_revoked} = assigns) do
+    ~H"""
+    <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-red-500 p-4 shadow-md rounded">
+      <div class="flex-1 w-full flex">
+        <p class="text-zinc-700 dark:text-zinc-300">
+          You are no longer an editor
         </p>
       </div>
     </div>

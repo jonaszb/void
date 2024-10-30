@@ -33,6 +33,7 @@ defmodule Void.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:faker, "~> 0.18"},
       {:timex, "~> 3.7"},
       {:phoenix, "~> 1.7.12"},

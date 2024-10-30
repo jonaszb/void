@@ -1,7 +1,11 @@
 defmodule Void.RoomUsers do
+  @moduledoc """
+  The Room User context.
+  """
+
   import Ecto.Query, warn: false
-  alias Void.Rooms.RoomUser
   alias Void.Repo
+  alias Void.Rooms.RoomUser
 
   def broadcast(message, event \\ :room_user_updated)
 
@@ -57,20 +61,23 @@ defmodule Void.RoomUsers do
 
   def grant_edit(room_user) do
     Repo.transaction(fn ->
-      # Revoke edit permissions for all other users in the same room
-      from(ru in RoomUser,
-        where: ru.room_id == ^room_user.room_id and ru.id != ^room_user.id,
-        update: [set: [is_editor: false]]
-      )
-      |> Repo.update_all([])
-
-      # Grant edit permission to the selected user and remove their edit request
       room_user
       |> RoomUser.changeset(%{is_editor: true, requesting_edit: false})
       |> Repo.update()
-
-      {:ok, Repo.all(from ru in RoomUser, where: ru.room_id == ^room_user.room_id)}
       |> broadcast(:edit_granted)
+    end)
+  end
+
+  def revoke_edit(room_user) when is_binary(room_user) do
+    get_room_user(room_user) |> revoke_edit()
+  end
+
+  def revoke_edit(room_user) do
+    Repo.transaction(fn ->
+      room_user
+      |> RoomUser.changeset(%{is_editor: false, requesting_edit: false})
+      |> Repo.update()
+      |> broadcast(:edit_revoked)
     end)
   end
 end

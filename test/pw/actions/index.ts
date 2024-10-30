@@ -43,8 +43,9 @@ export default class UserActions {
         await userRow.getByRole('button', { name: 'Make editor' }).click();
     }
 
-    async takeEditorRole() {
-        await this.page.getByRole('button', { name: 'Become editor' }).click();
+    async removeEditor(name: string) {
+        const userRow = this.page.getByRole('listitem', { name: 'Room user' }).filter({ hasText: name });
+        await userRow.getByRole('button', { name: 'Remove editor' }).click();
     }
 
     async deleteRoom() {
@@ -64,9 +65,13 @@ export default class UserActions {
         );
     }
 
-    async typeInEditor(text: string) {
+    async typeInEditor(text: string, options?: { delay?: number }) {
         await this.page.getByRole('code').getByRole('textbox').focus();
-        await this.page.keyboard.type(text, { delay: 50 });
+        await this.page.keyboard.type(text, { delay: options?.delay ?? 50 });
+    }
+
+    async clearEditor() {
+        await this.page.getByRole('code').getByRole('textbox').clear();
     }
 }
 

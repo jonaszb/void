@@ -4,11 +4,10 @@ defmodule Void.Accounts do
   """
 
   import Ecto.Query, warn: false
-  alias Void.Repo
   alias Ecto.Multi
+  alias Void.Accounts.{User, UserNotifier, UserToken}
+  alias Void.Repo
   alias Void.Rooms.RoomUser
-
-  alias Void.Accounts.{User, UserToken, UserNotifier}
 
   def get_user_by_email_or_register(%{"email" => email} = user_data) when is_binary(email) do
     case Repo.get_by(User, email: email) do

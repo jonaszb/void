@@ -36,6 +36,7 @@ const test = base.extend<CustomFixtures>({
         await altPage.goto(`/rooms/${uuid}`);
         await altPage.userActions.requestAccess();
         await page.userActions.admitUser(testUsers.secondary.display_name);
+        await expect(altPage.getByRole('code')).toContainText('Welcome to');
         await use({ page, uuid, altPage });
     },
 });
