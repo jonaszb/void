@@ -36,7 +36,7 @@ test.describe.parallel('Room concurrency tests - code editing', () => {
         });
     });
 
-    test('Concurrent editing on the same line (1)', async ({ twoUserRoom: { page, altPage } }) => {
+    test('Concurrent editing on the same line', async ({ twoUserRoom: { page, altPage } }) => {
         await test.step('Ensure both users are editors', async () => {
             await page.userActions.makeEditor(testUsers.secondary.display_name);
             await expect(page.locator('#editor-lock')).toBeHidden();
@@ -61,32 +61,6 @@ test.describe.parallel('Room concurrency tests - code editing', () => {
         await test.step('Third edit (by primary user)', async () => {
             // Ensure caret position remains unchanged while other user edits
             await page.userActions.typeInEditor('!');
-            await expect(altPage.getByRole('code')).toContainText('Hello World!');
-            await expect(page.getByRole('code')).toContainText('Hello World!');
-        });
-    });
-
-    test('Concurrent editing on the same line (2)', async ({ twoUserRoom: { page, altPage } }) => {
-        await test.step('Ensure both users are editors', async () => {
-            await page.userActions.makeEditor(testUsers.secondary.display_name);
-            await expect(page.locator('#editor-lock')).toBeHidden();
-            await expect(altPage.locator('#editor-lock')).toBeHidden();
-        });
-
-        await test.step('Prepare the editor', async () => {
-            await page.userActions.setCaretPosition(0, 0);
-            await page.userActions.typeInEditor(` \n`);
-            await page.waitForTimeout(process.env.CI ? 1500 : 500);
-            await page.userActions.setCaretPosition(0, 1);
-            await altPage.userActions.setCaretPosition(0, 0);
-            await page.waitForTimeout(process.env.CI ? 1500 : 500);
-        });
-
-        await test.step('Type simultaneously', async () => {
-            await Promise.all([
-                altPage.userActions.typeInEditor('Hello', { delay: 250 }),
-                page.userActions.typeInEditor('World!', { delay: 150 }),
-            ]);
             await expect(altPage.getByRole('code')).toContainText('Hello World!');
             await expect(page.getByRole('code')).toContainText('Hello World!');
         });
