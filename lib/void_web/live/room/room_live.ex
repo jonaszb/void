@@ -79,6 +79,13 @@ defmodule VoidWeb.RoomLive do
         message_user_data = %Message{user_id: this_room_user.id, room_id: room_uuid}
         socket = assign(socket, presences: presences)
 
+        sounds_json =
+          Jason.encode!(%{
+            message: ~p"/audio/chat_sound.mp3",
+            tap: ~p"/audio/tap.mp3",
+            access_request: ~p"/audio/beavis.mp3"
+          })
+
         assign(socket,
           room: room,
           message_user_data: message_user_data,
@@ -94,7 +101,9 @@ defmodule VoidWeb.RoomLive do
           presences: presences,
           notifications: [],
           notification_counter: 0,
-          editors: %{}
+          editors: %{},
+          muted: true,
+          sounds: sounds_json
         )
 
       _ ->
@@ -152,6 +161,30 @@ defmodule VoidWeb.RoomLive do
         if ru.id == room_user.id, do: room_user, else: ru
       end)
     )
+  end
+
+  def play_sound(socket, _) when socket.assigns.muted, do: socket
+  def play_sound(socket, params), do: push_event(socket, "play-sound", params)
+
+  def validate_message(%{"content" => content}, socket) when content == "" do
+    {:noreply,
+     assign(socket,
+       message_form: to_form(Message.changeset(socket.assigns.message_user_data, %{content: ""}))
+     )}
+  end
+
+  def validate_message(message, socket) do
+    message_form =
+      socket.assigns.message_user_data
+      |> Message.changeset(message)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, message_form: message_form)}
+  end
+
+  def handle_event("toggle_sound", _, socket) do
+    {:noreply, update(socket, :muted, &(not &1))}
   end
 
   @impl true
@@ -224,16 +257,8 @@ defmodule VoidWeb.RoomLive do
     {:noreply, assign(socket, room_state_form: room_state_form)}
   end
 
-  def handle_event("validate_message", params, socket) do
-    %{"message" => message} = params
-
-    message_form =
-      socket.assigns.message_user_data
-      |> Message.changeset(message)
-      |> Map.put(:action, :validate)
-      |> to_form()
-
-    {:noreply, assign(socket, message_form: message_form)}
+  def handle_event("validate_message", %{"message" => %{"content" => content} = message}, socket) do
+    validate_message(Map.put(message, "content", String.trim(content)), socket)
   end
 
   def handle_event("send_message", %{"message" => %{content: ""}}, socket), do: {:noreply, socket}
@@ -338,6 +363,7 @@ defmodule VoidWeb.RoomLive do
           |> update(:users_counter, &(&1 + 1))
           |> add_notification(%{type: :access_requested, user: room_user})
       end
+      |> play_sound(%{name: "access_request"})
 
     {:noreply, assign(socket, room_users: Rooms.get_room_users(socket.assigns.room))}
   end
@@ -447,6 +473,7 @@ defmodule VoidWeb.RoomLive do
           |> update(:message_counter, &(&1 + 1))
           |> add_notification(%{type: :chat_message, user: message.user, message: message.content})
       end
+      |> play_sound(%{name: "message"})
 
     {:noreply, assign(socket, messages: [message | socket.assigns.messages])}
   end

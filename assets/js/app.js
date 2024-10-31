@@ -64,4 +64,15 @@ window.addEventListener('toggle-darkmode', (e) => {
     initDarkMode();
 });
 
+// document.addEventListener(
+//     'click',
+//     () => {
+//         const audio = document.getElementById('message-sound');
+//         if (audio) {
+//             audio.play();
+//         }
+//     },
+//     { once: true }
+// );
+
 initDarkMode();

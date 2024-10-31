@@ -5,6 +5,7 @@ defmodule VoidWeb.Room.RoomComponents do
 
   use Phoenix.Component
   import VoidWeb.CoreComponents
+  alias Phoenix.LiveView.JS
 
   attr :is_owner, :boolean, required: true
   attr :active_tab, :atom, required: true
@@ -95,7 +96,7 @@ defmodule VoidWeb.Room.RoomComponents do
               <time msg-timestamp={"#{DateTime.to_iso8601(message.inserted_at)}"}></time>
             </span>
             <span class={[
-              "py-2 px-4 rounded-lg break-all",
+              "py-2 px-4 rounded-lg max-w-full break-words",
               is_mine && "bg-amber-500/25 dark:bg-amber-500/50",
               not is_mine && "bg-[#cdebf8]/50 dark:bg-[#0d455d]/75"
             ]}>
@@ -300,6 +301,24 @@ defmodule VoidWeb.Room.RoomComponents do
         class="text-amber-500"
         title="Lower hand"
       />
+      <.action_bar_button
+        :if={@muted == true}
+        name="hero-speaker-x-mark"
+        phx-value-id={@room_user.id}
+        phx-click={
+          JS.dispatch("js:play-sound", detail: %{name: "tap", force: true})
+          |> JS.push("toggle_sound")
+        }
+        title="Enable sound"
+      />
+      <.action_bar_button
+        :if={@muted == false}
+        name="hero-speaker-wave"
+        phx-value-id={@room_user.id}
+        phx-click={JS.push("toggle_sound")}
+        title="Disable sound"
+      />
+
       <%!-- <.action_bar_button
         :if={@room_user.is_owner}
         name="hero-pencil-solid"

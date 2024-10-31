@@ -40,7 +40,7 @@ defmodule VoidWeb.NotificationComponent do
         <.username_header>
           <%= @user.display_name %>
         </.username_header>
-        <p class="text-zinc-700 dark:text-zinc-300"><%= @message %></p>
+        <p class="text-zinc-700 dark:text-zinc-300 max-w-full break-words"><%= @message %></p>
       </div>
     </div>
     """
