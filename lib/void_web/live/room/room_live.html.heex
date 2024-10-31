@@ -95,6 +95,12 @@
   <section class="h-full border border-gray-500/35 mx-1 relative row-start-2">
     <div id="editor-container" class="h-full" phx-update="ignore">
       <div
+        id="loading-overlay"
+        class="absolute inset-0 flex items-center justify-center bg-transparent text-gray-600 z-10"
+      >
+        <.icon name="hero-code-bracket" class="scale-[5] animate-pulse" />
+      </div>
+      <div
         class="h-full"
         id="editor"
         phx-hook="MonacoEditor"

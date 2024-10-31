@@ -1,6 +1,4 @@
-try {
-    let { Howl } = require('howler');
-} catch {}
+import { Howl } from 'howler';
 let Hooks = {};
 
 let isReadOnly = false;
@@ -9,6 +7,7 @@ let userColors = {};
 Hooks.MonacoEditor = {
     mounted() {
         const monacoLoader = window.require;
+        const overlay = document.getElementById('loading-overlay');
         this.isRemoteUpdate = false;
 
         monacoLoader.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs' } });
@@ -30,6 +29,11 @@ Hooks.MonacoEditor = {
                 },
                 theme,
             });
+
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+
             this.editor.onDidChangeModelContent((e) => {
                 if (e.isFlush || this.isRemoteUpdate || isReadOnly) return; // Do nothing if the change is not caused by this user
                 this.pushEvent('update_editor_state', { changes: e.changes, full_value: this.editor.getValue() });

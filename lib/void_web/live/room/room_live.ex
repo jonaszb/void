@@ -356,8 +356,6 @@ defmodule VoidWeb.RoomLive do
         :users ->
           socket
 
-        # |> add_notification(%{type: :access_requested, user: room_user})
-
         _ ->
           socket
           |> update(:users_counter, &(&1 + 1))
