@@ -92,7 +92,8 @@ defmodule VoidWeb.RoomLive do
           messages: messages,
           message_counter: 0,
           users_counter: 0,
-          message_form: to_form(Message.changeset(message_user_data, %{content: ""})),
+          message_form:
+            to_form(Message.changeset(message_user_data, %{content: "", replies_to: nil})),
           active_tab: :users,
           room_users: room_users,
           room_user: this_room_user,
@@ -103,7 +104,8 @@ defmodule VoidWeb.RoomLive do
           notification_counter: 0,
           editors: %{},
           muted: true,
-          sounds: sounds_json
+          sounds: sounds_json,
+          active_reply_to: nil
         )
 
       _ ->
@@ -263,16 +265,22 @@ defmodule VoidWeb.RoomLive do
 
   def handle_event("send_message", %{"message" => %{content: ""}}, socket), do: {:noreply, socket}
 
-  def handle_event("send_message", params, socket) do
-    %{"message" => message} = params
+  def handle_event("send_message", %{"message" => message}, socket) do
+    message =
+      Map.put(message, "replies_to", Map.get(socket.assigns.active_reply_to || %{}, :id, nil))
 
-    socket.assigns.message_user_data
+    socket.assigns.message_form.source
     |> Message.changeset(message)
+    |> Map.put(:action, :insert)
     |> Messages.add_message()
 
     {:noreply,
      assign(socket,
-       message_form: to_form(Message.changeset(socket.assigns.message_user_data, %{content: ""}))
+       message_form:
+         to_form(
+           Message.changeset(socket.assigns.message_user_data, %{content: "", replies_to: nil})
+         ),
+       active_reply_to: nil
      )}
   end
 
@@ -341,6 +349,16 @@ defmodule VoidWeb.RoomLive do
     )
 
     {:noreply, socket}
+  end
+
+  def handle_event("reply_to", %{"id" => id}, socket) do
+    id = String.to_integer(id)
+    message = Enum.find(socket.assigns.messages, fn m -> m.id == id end)
+    {:noreply, assign(socket, active_reply_to: message)}
+  end
+
+  def handle_event("reply_to", _, socket) do
+    {:noreply, assign(socket, active_reply_to: nil)}
   end
 
   @impl true

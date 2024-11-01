@@ -15,13 +15,16 @@ defmodule Void.Messages do
 
   def get_messages(room_id) do
     Repo.all(from m in Message, where: m.room_id == ^room_id, order_by: [desc: m.inserted_at])
-    |> Repo.preload(:user)
+    |> Repo.preload([:user, replied_message: :user])
   end
 
   def add_message(message) do
     case Repo.insert(message) do
-      {:ok, msg} -> broadcast({:ok, Repo.preload(msg, :user)}, :new_message)
-      _ -> nil
+      {:ok, msg} ->
+        broadcast({:ok, Repo.preload(msg, [:user, replied_message: :user])}, :new_message)
+
+      _ ->
+        nil
     end
   end
 end

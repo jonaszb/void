@@ -77,34 +77,80 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def chat_section(assigns) do
     ~H"""
-    <section class="p-4 h-full grid grid-rows-[1fr,min-content] grid-cols-1 justify-between">
+    <section class="p-4 h-full grid grid-rows-[1fr,min-content] grid-cols-1 justify-between text-sm">
       <ul
-        class="flex flex-col-reverse overflow-scroll gap-1 p-4 flex-grow rounded bg-zinc-100 dark:bg-zinc-800 shadow-inner h-full"
+        class="flex flex-col-reverse overflow-scroll gap-1 p-4 flex-grow rounded bg-zinc-100 dark:bg-zinc-800 shadow-inner h-full scroll-smooth"
         id="msg-container"
         phx-hook="FormatTimestampsHook"
       >
         <%= for {message, index} <- Enum.with_index(@messages) do %>
           <% is_mine = message.user_id == @user_id %>
+          <% is_reply = message.replies_to != nil %>
           <% show_info =
             index == length(@messages) - 1 || Enum.at(@messages, index + 1).user_id != message.user_id ||
               minutes_apart(message, Enum.at(@messages, index + 1)) > 15 %>
-          <li class={"flex max-w-[80%] flex-col gap-0.5 #{if is_mine, do: "self-end items-end", else: "self-start items-start"}"}>
+          <li
+            id={"message-#{message.id}"}
+            class={"flex max-w-full #{is_reply && "w-full"} group flex-col gap-0.5 #{if is_mine, do: "self-end items-end", else: "self-start items-start"}"}
+          >
             <span :if={show_info} class="text-xs">
               <span :if={not is_mine} class="font-bold mr-1">
                 <%= message.user.display_name %>
               </span>
               <time msg-timestamp={"#{DateTime.to_iso8601(message.inserted_at)}"}></time>
             </span>
-            <span class={[
-              "py-2 px-4 rounded-lg max-w-full break-words",
-              is_mine && "bg-amber-500/25 dark:bg-amber-500/50",
-              not is_mine && "bg-[#cdebf8]/50 dark:bg-[#0d455d]/75"
-            ]}>
-              <%= message.content %>
-            </span>
+            <div class={["w-full flex items-center", is_mine && "flex-row-reverse"]}>
+              <div class={[
+                "rounded-lg max-w-[85%] break-words flex flex-col gap-1 grow-1",
+                is_mine && "bg-amber-500/25 dark:bg-amber-500/50 items-end",
+                not is_mine && "bg-[#cdebf8]/50 dark:bg-[#0d455d]/75 items-start",
+                is_reply && "p-2",
+                not is_reply && "py-2 px-4"
+              ]}>
+                <a
+                  :if={is_reply}
+                  href={"#message-#{message.replied_message.id}"}
+                  class="relative p-2 rounded w-full max-w-full bg-black/5 dark:bg-white/10 border-dashed border border-black/20 dark:border-white/20"
+                >
+                  <div class="font-bold">
+                    <%= if message.replied_message.user.id == @user_id,
+                      do: "You",
+                      else: message.replied_message.user.display_name %>
+                  </div>
+                  <span class="line-clamp-3 break-words ">
+                    <%= message.replied_message.content %>
+                  </span>
+                </a>
+                <span class="max-w-full"><%= message.content %></span>
+              </div>
+              <button
+                phx-click={JS.focus(to: "#message_content") |> JS.push("reply_to")}
+                phx-value-id={message.id}
+                class="transition-all opacity-0 p-2 h-8 w-8 rounded-full dark:bg-white/20 dark:hover:bg-white/30 bg-black/10 hover:bg-black/20 mx-2 flex items-center group-hover:opacity-100 "
+              >
+                <.icon class="w-4 h-4" name="hero-arrow-uturn-right" />
+              </button>
+            </div>
           </li>
         <% end %>
       </ul>
+      <div
+        :if={@active_reply_to}
+        class="relative p-2 rounded max-w-full bg-black/5 dark:bg-white/10 border-l-amber-500 border-l-4 mt-4"
+      >
+        <div class="font-bold">
+          <%= if @active_reply_to.user.id == @user_id,
+            do: "You",
+            else: @active_reply_to.user.display_name %>
+        </div>
+        <span class="line-clamp-3 break-words ">
+          <%= @active_reply_to.content %>
+        </span>
+        <button phx-click="reply_to" class="absolute right-0.5 top-0.5 scale-75">
+          <.icon name="hero-x-mark" />
+        </button>
+      </div>
+
       <.form for={@message_form} phx-submit="send_message" phx-change="validate_message">
         <div class="flex gap-2  pt-2">
           <span class="flex-grow">
