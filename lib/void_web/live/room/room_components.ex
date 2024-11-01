@@ -126,7 +126,7 @@ defmodule VoidWeb.Room.RoomComponents do
               <button
                 phx-click={JS.focus(to: "#message_content") |> JS.push("reply_to")}
                 phx-value-id={message.id}
-                class="transition-all opacity-0 p-2 h-8 w-8 rounded-full dark:bg-white/20 dark:hover:bg-white/30 bg-black/10 hover:bg-black/20 mx-2 flex items-center group-hover:opacity-100 "
+                class="transition-all opacity-0 p-2 h-8 w-8 rounded-full  dark:hover:bg-white/20  hover:bg-black/10 mx-2 flex items-center group-hover:opacity-100 "
               >
                 <.icon class="w-4 h-4" name="hero-arrow-uturn-right" />
               </button>
