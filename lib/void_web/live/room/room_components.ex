@@ -334,12 +334,20 @@ defmodule VoidWeb.Room.RoomComponents do
 
   defp requesting_edit?(room_users, user_uuid) do
     user = get_this_room_user(room_users, user_uuid)
-    user.requesting_edit
+
+    case user do
+      nil -> false
+      user -> user.requesting_edit
+    end
   end
 
   defp editor?(room_users, user_uuid) do
     user = get_this_room_user(room_users, user_uuid)
-    user.is_editor
+
+    case user do
+      nil -> false
+      user -> user.is_editor
+    end
   end
 
   attr :room_user, :map, required: true

@@ -165,20 +165,21 @@ defmodule Void.Rooms do
     end
   end
 
-  def deny_user_access(room_user) when is_binary(room_user) do
-    user = get_room_user(room_user)
+  def deny_user_access(room_user) when is_binary(room_user),
+    do: deny_user_access(get_room_user(room_user))
 
+  def deny_user_access(room_user) do
     Repo.transaction(fn ->
-      from(m in Message, where: m.user_id == ^user.id)
-      |> Repo.update_all(set: [user_display_name: user.display_name])
+      from(m in Message, where: m.user_id == ^room_user.id)
+      |> Repo.update_all(set: [user_display_name: room_user.display_name])
 
-      Repo.delete(user)
+      Repo.delete(room_user)
     end)
     |> case do
       {:ok, _result} ->
-        case user.has_access do
-          true -> broadcast("room-users:#{user.room_id}", {:access_revoked, user})
-          false -> broadcast("lobby:#{user.room_id}", {:access_denied, user})
+        case room_user.has_access do
+          true -> broadcast("room-users:#{room_user.room_id}", {:access_revoked, room_user})
+          false -> broadcast("lobby:#{room_user.room_id}", {:access_denied, room_user})
         end
 
       {:error, reason} ->

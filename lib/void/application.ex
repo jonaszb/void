@@ -18,7 +18,8 @@ defmodule Void.Application do
       # {Void.Worker, arg},
       # Start to serve requests, typically the last entry
       VoidWeb.Endpoint,
-      VoidWeb.Presence
+      VoidWeb.Presence,
+      Void.PeriodicUserCleaner
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
