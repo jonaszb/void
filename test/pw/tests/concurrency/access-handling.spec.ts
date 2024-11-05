@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures';
 import testUsers from '../../test-users';
 
-test.describe.parallel('Room concurrency tests - acces handling', () => {
+test.describe.parallel('Room concurrency tests - access handling', () => {
     test('Guest access can be received and rejected', async ({ room: { page, uuid }, guestPage }) => {
         await guestPage.goto(`/rooms/${uuid}`);
         await guestPage.userActions.requestAccess('Richard Wagner');
@@ -44,5 +44,13 @@ test.describe.parallel('Room concurrency tests - acces handling', () => {
 
         await page.getByText('Leonard Bernstein').waitFor();
         await expect(altPage.getByText('Leonard Bernstein')).toBeHidden();
+    });
+
+    test('Owner can remove users from the room', async ({ twoUserRoom: { page, altPage } }) => {
+        await page.userActions.selectRoomTab('Settings');
+        await page.getByRole('button', { name: 'Manage users' }).click();
+        await page.getByRole('button', { name: 'Remove user' }).click();
+        await page.getByRole('button', { name: 'Close' }).click();
+        await expect(altPage).toHaveURL(/access_denied/);
     });
 });

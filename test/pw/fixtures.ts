@@ -11,6 +11,7 @@ const test = base.extend<CustomFixtures>({
         await page.goto('/dashboard');
         await page.getByText('New Room').click();
         await expect(page).toHaveURL(/room/);
+        await page.userActions.toggleRoomMenu();
         const uuid = /((\w{4,12}-?)){5}/.exec(page.url())[0];
         await use({ page, uuid });
         await page.userActions.deleteRoom();
@@ -37,6 +38,7 @@ const test = base.extend<CustomFixtures>({
         await altPage.userActions.requestAccess();
         await page.userActions.admitUser(testUsers.secondary.display_name);
         await expect(altPage.getByRole('code')).toContainText('Welcome to');
+        await altPage.userActions.toggleRoomMenu();
         await use({ page, uuid, altPage });
     },
 });

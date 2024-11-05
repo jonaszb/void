@@ -73,6 +73,11 @@ export default class UserActions {
     async clearEditor() {
         await this.page.getByRole('code').getByRole('textbox').clear();
     }
+
+    async sendMessage(text: string) {
+        await this.page.locator('#message_content').fill(text);
+        await this.page.getByTitle('Send message').click();
+    }
 }
 
 type RoomTab = 'Chat' | 'User list' | 'Settings';
