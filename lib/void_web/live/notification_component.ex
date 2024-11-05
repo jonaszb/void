@@ -36,7 +36,7 @@ defmodule VoidWeb.NotificationComponent do
   def render_notification(%{type: :chat_message} = assigns) do
     ~H"""
     <div class="flex items-start border bg-white dark:bg-zinc-950 border-zinc-300/50 p-4 shadow-md rounded">
-      <div class="flex-1 w-full">
+      <div class="flex-1 w-full" title="Chat message notification">
         <.username_header>
           <%= @user.display_name %>
         </.username_header>
@@ -49,7 +49,7 @@ defmodule VoidWeb.NotificationComponent do
   def render_notification(%{type: :hand_raised} = assigns) do
     ~H"""
     <div class="flex items-start border bg-white dark:bg-zinc-950 border-zinc-300/50 p-4 shadow-md rounded">
-      <div class="flex-1 w-full">
+      <div class="flex-1 w-full" title="Raised hand notification">
         <.username_header>
           <%= @user.display_name %>
         </.username_header>
@@ -64,22 +64,22 @@ defmodule VoidWeb.NotificationComponent do
     """
   end
 
-  def render_notification(%{type: :new_editor} = assigns) do
-    ~H"""
-    <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-blue-500 p-4 shadow-md rounded">
-      <div class="flex-1 w-full flex">
-        <p class="text-zinc-700 dark:text-zinc-300">
-          <b><%= @user.display_name %></b> is now the editor
-        </p>
-      </div>
-    </div>
-    """
-  end
+  # def render_notification(%{type: :new_editor} = assigns) do
+  #   ~H"""
+  #   <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-blue-500 p-4 shadow-md rounded">
+  #     <div class="flex-1 w-full flex" title="Edit granted notification">
+  #       <p class="text-zinc-700 dark:text-zinc-300">
+  #         <b><%= @user.display_name %></b> is now the editor
+  #       </p>
+  #     </div>
+  #   </div>
+  #   """
+  # end
 
   def render_notification(%{type: :edit_granted} = assigns) do
     ~H"""
     <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-blue-500 p-4 shadow-md rounded">
-      <div class="flex-1 w-full flex">
+      <div class="flex-1 w-full flex" title="Edit granted notification">
         <p class="text-zinc-700 dark:text-zinc-300">
           You are now an editor
         </p>
@@ -91,7 +91,7 @@ defmodule VoidWeb.NotificationComponent do
   def render_notification(%{type: :edit_revoked} = assigns) do
     ~H"""
     <div class="flex items-start border border-l-4 bg-white dark:bg-zinc-950 border-zinc-300/50 border-l-red-500 p-4 shadow-md rounded">
-      <div class="flex-1 w-full flex">
+      <div class="flex-1 w-full flex" title="Edit revoked notification">
         <p class="text-zinc-700 dark:text-zinc-300">
           You are no longer an editor
         </p>
@@ -103,7 +103,7 @@ defmodule VoidWeb.NotificationComponent do
   def render_notification(%{type: :access_requested} = assigns) do
     ~H"""
     <div class="flex items-start bg-white dark:bg-zinc-950 p-4 shadow-md rounded">
-      <div class="flex-1 w-full flex items-center gap-2">
+      <div class="flex-1 w-full flex items-center gap-2" title="Access request notification">
         <p class="text-zinc-700 dark:text-zinc-300">
           <b><%= @user.display_name %></b> wants to join the room
         </p>

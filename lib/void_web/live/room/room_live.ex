@@ -13,7 +13,6 @@ defmodule VoidWeb.RoomLive do
   alias VoidWeb.NotificationComponent
   alias VoidWeb.Presence
   import VoidWeb.Logos
-  import VoidWeb.ThemeToggle
   import VoidWeb.Room.RoomComponents
 
   @sidebar_tabs ["chat", "users", "settings", "nil"]
@@ -94,7 +93,7 @@ defmodule VoidWeb.RoomLive do
           users_counter: 0,
           message_form:
             to_form(Message.changeset(message_user_data, %{content: "", replies_to: nil})),
-          active_tab: :users,
+          active_tab: nil,
           room_users: room_users,
           room_user: this_room_user,
           room_state: room_state,
@@ -231,6 +230,9 @@ defmodule VoidWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("change_language", %{"language" => language}, socket),
+    do: handle_event("update_room_state", %{"room_state" => %{language: language}}, socket)
+
   def handle_event(
         "update_editor_state",
         params,
@@ -319,6 +321,12 @@ defmodule VoidWeb.RoomLive do
 
     {:noreply, assign(socket, active_tab: String.to_atom(tab_name))}
   end
+
+  def handle_event("set_role", %{"role" => "Editor"} = params, socket),
+    do: handle_event("grant_edit", params, socket)
+
+  def handle_event("set_role", %{"role" => "Viewer"} = params, socket),
+    do: handle_event("revoke_edit", params, socket)
 
   @impl true
   def handle_event("notification_action", %{"id" => id, "action" => action}, socket) do
@@ -437,9 +445,7 @@ defmodule VoidWeb.RoomLive do
   def handle_info({:edit_revoked, room_user}, socket) do
     socket =
       socket
-      |> push_event("remove_user_cursor", %{
-        userId: room_user.id
-      })
+      |> remove_user_cursor(room_user.id)
       |> update_room_user(room_user)
 
     {:noreply, socket}
@@ -537,4 +543,25 @@ defmodule VoidWeb.RoomLive do
     socket = push_event(socket, "apply_changes", %{changes: changes})
     {:noreply, socket}
   end
+
+  def handle_info({:access_revoked, user}, socket) when user.id == socket.assigns.room_user.id do
+    Presence.untrack(self(), "room:#{user.room_id}", user.user_id)
+    {:noreply, push_navigate(socket, to: ~p"/access_denied")}
+  end
+
+  def handle_info({:access_revoked, user}, socket),
+    do:
+      {:noreply,
+       socket
+       |> remove_user_cursor(user.id)
+       |> assign(room_users: Rooms.get_room_users(socket.assigns.room))}
+
+  @impl true
+  def terminate(_reason, socket) do
+    user = socket.assigns.room_user
+    Presence.untrack(self(), "room:#{user.room_id}", user.user_id)
+  end
+
+  def remove_user_cursor(socket, user_id),
+    do: push_event(socket, "remove_user_cursor", %{userId: user_id})
 end

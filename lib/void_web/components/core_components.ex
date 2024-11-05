@@ -39,6 +39,7 @@ defmodule VoidWeb.CoreComponents do
   attr :id, :string, required: true
   attr :show, :boolean, default: false
   attr :on_cancel, JS, default: %JS{}
+  attr :small, :boolean, default: false
   slot :inner_block, required: true
 
   def modal(assigns) do
@@ -70,7 +71,11 @@ defmodule VoidWeb.CoreComponents do
               phx-window-keydown={JS.exec("data-cancel", to: "##{@id}")}
               phx-key="escape"
               phx-click-away={JS.exec("data-cancel", to: "##{@id}")}
-              class="shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white dark:bg-gray-800 p-14 shadow-lg ring-1 transition"
+              class={[
+                "shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-2xl bg-white dark:bg-gray-800 shadow-lg ring-1 transition",
+                @small && "px-4 py-8 sm:p-8",
+                not @small && "p-14"
+              ]}
             >
               <div class="absolute top-6 right-5">
                 <button
@@ -603,6 +608,31 @@ defmodule VoidWeb.CoreComponents do
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
     <span class={[@name, @class]} />
+    """
+  end
+
+  ## TODO - move custom components out to another module
+
+  attr :label, :string, default: nil
+  attr :class, :string, default: nil
+  attr :value, :string, default: nil
+  attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
+  attr :rest, :global, include: ~w(id disabled form name value)
+
+  def dropdown(assigns) do
+    ~H"""
+    <select
+      class={[
+        "block w-full rounded-lg focus:ring-0 text-sm sm:leading-6 bg-transparent pr-8 min-w-max border-none pl-2 cursor-pointer",
+        @class && @class
+      ]}
+      {@rest}
+    >
+      <%= Phoenix.HTML.Form.options_for_select(
+        @options,
+        @value
+      ) %>
+    </select>
     """
   end
 

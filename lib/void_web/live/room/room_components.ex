@@ -90,12 +90,13 @@ defmodule VoidWeb.Room.RoomComponents do
             index == length(@messages) - 1 || Enum.at(@messages, index + 1).user_id != message.user_id ||
               minutes_apart(message, Enum.at(@messages, index + 1)) > 15 %>
           <li
+            aria-label="Message"
             id={"message-#{message.id}"}
             class={"flex max-w-full #{is_reply && "w-full"} group flex-col gap-0.5 #{if is_mine, do: "self-end items-end", else: "self-start items-start"}"}
           >
             <span :if={show_info} class="text-xs">
               <span :if={not is_mine} class="font-bold mr-1">
-                <%= message.user.display_name %>
+                <%= (message.user && message.user.display_name) || message.user_display_name %>
               </span>
               <time msg-timestamp={"#{DateTime.to_iso8601(message.inserted_at)}"}></time>
             </span>
@@ -113,9 +114,7 @@ defmodule VoidWeb.Room.RoomComponents do
                   class="relative p-2 rounded w-full max-w-full bg-black/5 dark:bg-white/10 border-dashed border border-black/20 dark:border-white/20"
                 >
                   <div class="font-bold">
-                    <%= if message.replied_message.user.id == @user_id,
-                      do: "You",
-                      else: message.replied_message.user.display_name %>
+                    <%= get_message_display_name(message.replied_message, @user_id) %>
                   </div>
                   <span class="line-clamp-3 break-words ">
                     <%= message.replied_message.content %>
@@ -124,6 +123,7 @@ defmodule VoidWeb.Room.RoomComponents do
                 <span class="max-w-full"><%= message.content %></span>
               </div>
               <button
+                title="Reply"
                 phx-click={JS.focus(to: "#message_content") |> JS.push("reply_to")}
                 phx-value-id={message.id}
                 class="transition-all opacity-0 p-2 h-8 w-8 rounded-full  dark:hover:bg-white/20  hover:bg-black/10 mx-2 flex items-center group-hover:opacity-100 "
@@ -139,9 +139,7 @@ defmodule VoidWeb.Room.RoomComponents do
         class="relative p-2 rounded max-w-full bg-black/5 dark:bg-white/10 border-l-amber-500 border-l-4 mt-4"
       >
         <div class="font-bold">
-          <%= if @active_reply_to.user.id == @user_id,
-            do: "You",
-            else: @active_reply_to.user.display_name %>
+          <%= get_message_display_name(@active_reply_to, @user_id) %>
         </div>
         <span class="line-clamp-3 break-words ">
           <%= @active_reply_to.content %>
@@ -156,7 +154,7 @@ defmodule VoidWeb.Room.RoomComponents do
           <span class="flex-grow">
             <.input autocomplete="off" placeholder="Type a message" field={@message_form[:content]} />
           </span>
-          <button class="w-fit mt-2 group">
+          <button title="Send message" class="w-fit mt-2 group">
             <.icon
               name="hero-paper-airplane"
               class="h-6 transition-all group-hover:scale-110 group-hover:text-amber-500"
@@ -170,7 +168,7 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def settings_section(assigns) do
     ~H"""
-    <section class="p-4 ">
+    <section class="p-4 h-full flex flex-col">
       <.form
         for={@room_state_form}
         phx-change="validate_room_state_form"
@@ -179,25 +177,42 @@ defmodule VoidWeb.Room.RoomComponents do
       >
         <fieldset class="w-full flex flex-col gap-4">
           <.input label="Room name" field={@room_state_form[:name]} />
-          <.input
-            label="Language"
-            field={@room_state_form[:language]}
-            type="select"
-            options={@supported_languages}
-          />
         </fieldset>
         <button disabled={@room_state_form.source.errors !== []} class="btn-primary w-fit">
           SAVE
         </button>
       </.form>
-      <div class="h-px w-full bg-gray-500/50 my-8" />
-      <button
-        class="btn-danger flex w-full justify-center"
-        data-confirm="Are you sure you want to delete this room?"
-        phx-click="delete"
-      >
-        DELETE ROOM
-      </button>
+      <div class="flex flex-col content-between justify-between flex-grow">
+        <div>
+          <div class="h-px w-full bg-gray-500/50 my-8" />
+          <button class="flex w-full justify-center" phx-click={show_modal("access-modal")}>
+            MANAGE USERS
+          </button>
+          <p class="text-center text-zinc-600 dark:text-zinc-400 mt-2 text-sm">
+            Manage user roles and access
+          </p>
+        </div>
+
+        <div>
+          <div class="h-px w-full bg-gray-500/50 my-8" />
+          <button
+            class="btn-danger flex w-full justify-center"
+            data-confirm="Are you sure you want to delete this room?"
+            phx-click="delete"
+          >
+            DELETE ROOM
+          </button>
+        </div>
+      </div>
+      <.modal id="access-modal" small={true}>
+        <.live_component
+          module={VoidWeb.Room.AccessControlModal}
+          id="access-control-modal-live"
+          room_users={@room_users}
+          room={@room}
+          presences={@presences}
+        />
+      </.modal>
     </section>
     """
   end
@@ -331,7 +346,7 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def action_bar(assigns) do
     ~H"""
-    <ul class="flex gap-2 md:gap-4 px-4 rounded-full border border-gray-500 my-4 items-center dark:text-gray-200 text-gray-700 ">
+    <ul class="flex gap-2 md:gap-4 px-4 py-2 rounded-full border border-gray-500 items-center dark:text-gray-200 text-gray-700 ">
       <.action_bar_button
         :if={@room_user.requesting_edit == false}
         name="hero-hand-raised"
@@ -364,16 +379,18 @@ defmodule VoidWeb.Room.RoomComponents do
         phx-click={JS.push("toggle_sound")}
         title="Disable sound"
       />
-
-      <%!-- <.action_bar_button
-        :if={@room_user.is_owner}
-        name="hero-pencil-solid"
-        danger={true}
-        disabled={@room_user.is_editor}
-        phx-value-id={@room_user.id}
-        phx-click="grant_edit"
-        title="Become editor"
-      /> --%>
+      <.action_bar_button
+        class="hidden dark:block"
+        name="hero-moon"
+        phx-click={JS.dispatch("toggle-darkmode")}
+        title="Toggle dark mode"
+      />
+      <.action_bar_button
+        class="block dark:hidden"
+        name="hero-sun"
+        phx-click={JS.dispatch("toggle-darkmode")}
+        title="Toggle dark mode"
+      />
     </ul>
     """
   end
@@ -393,6 +410,19 @@ defmodule VoidWeb.Room.RoomComponents do
       />
     </button>
     """
+  end
+
+  defp get_message_display_name(message, current_user_id) do
+    case message.user do
+      nil ->
+        message.user_display_name
+
+      user ->
+        case user.id == current_user_id do
+          true -> "You"
+          false -> message.user.display_name
+        end
+    end
   end
 
   defp get_initial(name), do: name |> String.at(0) |> String.upcase()

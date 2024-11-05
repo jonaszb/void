@@ -33,6 +33,10 @@ defmodule Void.RoomUsers do
 
   def get_room_user(id) when is_binary(id), do: Repo.get_by(RoomUser, id: id)
 
+  def get_room_users(room_id) do
+    Repo.get_by(RoomUser, room_id: room_id)
+  end
+
   def request_edit(room_user) when is_binary(room_user) do
     get_room_user(room_user) |> request_edit()
   end

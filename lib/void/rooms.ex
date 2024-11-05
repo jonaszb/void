@@ -11,6 +11,7 @@ defmodule Void.Rooms do
   alias Void.Rooms.Room
   alias Void.Rooms.RoomState
   alias Void.Rooms.RoomUser
+  alias Void.Rooms.Message
   @default_room_cap 10
 
   def broadcast(topic, message) do
@@ -166,8 +167,23 @@ defmodule Void.Rooms do
 
   def deny_user_access(room_user) when is_binary(room_user) do
     user = get_room_user(room_user)
-    Repo.delete(user)
-    broadcast("lobby:#{user.room_id}", {:access_denied, user})
+
+    Repo.transaction(fn ->
+      from(m in Message, where: m.user_id == ^user.id)
+      |> Repo.update_all(set: [user_display_name: user.display_name])
+
+      Repo.delete(user)
+    end)
+    |> case do
+      {:ok, _result} ->
+        case user.has_access do
+          true -> broadcast("room-users:#{user.room_id}", {:access_revoked, user})
+          false -> broadcast("lobby:#{user.room_id}", {:access_denied, user})
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   def grant_user_access(room_user) when is_binary(room_user) do
