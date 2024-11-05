@@ -373,6 +373,7 @@ defmodule VoidWeb.Room.RoomComponents do
       <.action_bar_button
         :if={@muted == true}
         name="hero-speaker-x-mark"
+        class="hidden md:block"
         phx-value-id={@room_user.id}
         phx-click={
           JS.dispatch("js:play-sound", detail: %{name: "tap", force: true})
@@ -383,6 +384,7 @@ defmodule VoidWeb.Room.RoomComponents do
       <.action_bar_button
         :if={@muted == false}
         name="hero-speaker-wave"
+        class="hidden md:block"
         phx-value-id={@room_user.id}
         phx-click={JS.push("toggle_sound")}
         title="Disable sound"
