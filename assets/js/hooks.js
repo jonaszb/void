@@ -300,7 +300,7 @@ Hooks.ConnectionStatus = {
     mounted() {
         this.disconnectionCount = 0;
         setTimeout(() => {
-            this.el.classList.replace('-z-50', 'z-50');
+            this.el.classList.replace('-z-50', 'z-[100]');
             this.checkConnection();
         }, 500);
     },
