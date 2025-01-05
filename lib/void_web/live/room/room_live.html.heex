@@ -10,7 +10,9 @@
   <header class="flex px-2 md:px-4 justify-between font-work relative">
     <div class="flex gap-4 items-center ">
       <.logo_round class="w-12" />
-      <h1 class="hidden sm:block text-lg"><%= @room_state.name %></h1>
+      <h1 class="hidden sm:block text-lg truncate max-w-xs lg:max-w-lg">
+        <%= @room_state.name %>
+      </h1>
     </div>
     <div class="flex gap-2 items-center">
       <.form phx-change="change_language">
