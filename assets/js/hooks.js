@@ -296,48 +296,48 @@ Hooks.Countdown = {
     },
 };
 
-Hooks.ConnectionStatus = {
-    mounted() {
-        this.disconnectionCount = 0;
-        setTimeout(() => {
-            this.el.classList.replace('-z-50', 'z-[100]');
-            this.checkConnection();
-        }, 500);
-    },
+// Hooks.ConnectionStatus = {
+//     mounted() {
+//         this.disconnectionCount = 0;
+//         setTimeout(() => {
+//             this.el.classList.replace('-z-50', 'z-[100]');
+//             this.checkConnection();
+//         }, 500);
+//     },
 
-    checkConnection() {
-        if (!liveSocket.isConnected()) {
-            this.showOverlay();
-        }
+//     checkConnection() {
+//         if (!liveSocket.isConnected()) {
+//             this.showOverlay();
+//         }
 
-        setInterval(() => {
-            if (!liveSocket.isConnected()) {
-                this.handleDisconnection();
-            } else {
-                this.handleReconnection();
-            }
-        }, 1500);
-    },
+//         setInterval(() => {
+//             if (!liveSocket.isConnected()) {
+//                 this.handleDisconnection();
+//             } else {
+//                 this.handleReconnection();
+//             }
+//         }, 1500);
+//     },
 
-    handleDisconnection() {
-        this.disconnectionCount++;
-        if (this.disconnectionCount >= 2) {
-            this.showOverlay();
-        }
-    },
-    handleReconnection() {
-        this.disconnectionCount = 0;
-        this.hideOverlay();
-    },
-    showOverlay() {
-        this.el?.classList.replace('opacity-0', 'opacity-80');
-        this.el?.classList.replace('pointer-events-none', 'pointer-events-auto');
-    },
-    hideOverlay() {
-        this.el?.classList.replace('opacity-80', 'opacity-0');
-        this.el?.classList.replace('pointer-events-auto', 'pointer-events-none');
-    },
-};
+//     handleDisconnection() {
+//         this.disconnectionCount++;
+//         if (this.disconnectionCount >= 2) {
+//             this.showOverlay();
+//         }
+//     },
+//     handleReconnection() {
+//         this.disconnectionCount = 0;
+//         this.hideOverlay();
+//     },
+//     showOverlay() {
+//         this.el?.classList.replace('opacity-0', 'opacity-80');
+//         this.el?.classList.replace('pointer-events-none', 'pointer-events-auto');
+//     },
+//     hideOverlay() {
+//         this.el?.classList.replace('opacity-80', 'opacity-0');
+//         this.el?.classList.replace('pointer-events-auto', 'pointer-events-none');
+//     },
+// };
 
 export default Hooks;
 
