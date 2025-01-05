@@ -103,12 +103,12 @@ defmodule VoidWeb.NotificationComponent do
   def render_notification(%{type: :access_requested} = assigns) do
     ~H"""
     <div class="flex items-start bg-white dark:bg-zinc-950 p-4 shadow-md rounded">
-      <div class="flex-1 w-full flex items-center gap-2" title="Access request notification">
+      <div class="flex-1 w-full flex items-center gap-4" title="Access request notification">
         <p class="text-zinc-700 dark:text-zinc-300">
           <b><%= @user.display_name %></b> wants to join the room
         </p>
         <button
-          class="rounded-full bg-green-500 p-2 h-fit disabled:bg-zinc-500"
+          class="rounded-full transition-all border-green-500 text-green-500 bg-transparent hover:bg-green-500 hover:text-white dark:hover:text-zinc-950 border p-2 h-fit disabled:bg-zinc-500"
           phx-click="grant_access"
           phx-value-id={@user.id}
           phx-value-notification_id={@id}
