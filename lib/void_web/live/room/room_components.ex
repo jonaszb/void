@@ -183,16 +183,22 @@ defmodule VoidWeb.Room.RoomComponents do
           SAVE
         </button>
       </.form>
-      <div class="flex flex-col content-between justify-between flex-grow">
-        <div>
-          <div class="h-px w-full bg-gray-500/50 my-8" />
-          <button class="flex w-full justify-center" phx-click={show_modal("access-modal")}>
-            MANAGE USERS
-          </button>
-          <p class="text-center text-zinc-600 dark:text-zinc-400 mt-2 text-sm">
-            Manage user roles and access
-          </p>
-        </div>
+      <div class="flex flex-col content-between flex-grow">
+        <div class="h-px w-full bg-gray-500/50 mt-8 mb-2" />
+        <ul class="grid grid-cols-2 auto-rows-min flex-1 gap-1">
+          <.config_menu_item
+            title="USERS"
+            description="Manage user roles and access"
+            modal_id="access-modal"
+          />
+          <.config_menu_item
+            title="PACKAGES"
+            description="Load or remove packages"
+            modal_id="modules-modal"
+            disabled={@room_state.language not in ["javascript", "typescript"]}
+            disabled_message="JS/TS only"
+          />
+        </ul>
 
         <div>
           <div class="h-px w-full bg-gray-500/50 my-8" />
@@ -214,7 +220,46 @@ defmodule VoidWeb.Room.RoomComponents do
           presences={@presences}
         />
       </.modal>
+      <.modal id="modules-modal" small={true}>
+        <.live_component
+          module={VoidWeb.Room.PackageManagementModal}
+          id="module-management-modal-live"
+          room={@room}
+        />
+      </.modal>
     </section>
+    """
+  end
+
+  attr :title, :string, required: true
+  attr :description, :string, required: true
+  attr :modal_id, :string, required: true
+  attr :disabled, :boolean, default: false
+  attr :disabled_message, :string
+
+  def config_menu_item(assigns) do
+    ~H"""
+    <li
+      class={[
+        "rounded transition-all duration-300 bg-no-repeat cursor-pointer py-4 px-2 border border-zinc-300/50 dark:border-zinc-700",
+        "bg-gradient-to-tl from-zinc-500/25 to-80%  bg-[position:_-100%_-200%] hover:bg-[position:_80%_80%] hover:brightness-110 hover:scale-[1.02] bg-[size:_200%]",
+        @disabled && "pointer-events-none"
+      ]}
+      phx-click={show_modal(assigns.modal_id)}
+    >
+      <button class={["flex w-full justify-center", @disabled && "opacity-50"]}>
+        <%= assigns.title %>
+      </button>
+      <p class={[
+        "text-center text-zinc-600 dark:text-zinc-400 mt-2 text-sm",
+        @disabled && "opacity-50"
+      ]}>
+        <%= assigns.description %>
+      </p>
+      <p :if={@disabled and @disabled_message} class="text-red-500 text-center text-sm font-bold">
+        <%= @disabled_message %>
+      </p>
+    </li>
     """
   end
 
