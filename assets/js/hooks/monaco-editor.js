@@ -16,7 +16,7 @@ export default {
             let model;
 
             if (language === 'javascript' || language === 'typescript') {
-                // Add React type definitions
+                // type definition for testing
                 fetch('https://unpkg.com/@types/react/index.d.ts')
                     .then((response) => response.text())
                     .then((dts) => {
@@ -26,28 +26,26 @@ export default {
                         );
                     });
 
-                fetch('https://unpkg.com/@playwright/test@1.49.1/index.d.ts')
-                    .then((response) => response.text())
-                    .then((dts) => {
-                        monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                            dts,
-                            'file:///node_modules/@types/@playwright/test/index.d.ts'
-                        );
-                    });
+                // fetch('https://unpkg.com/@playwright/test@1.49.1/index.d.ts')
+                //     .then((response) => response.text())
+                //     .then((dts) => {
+                //         monaco.languages.typescript.typescriptDefaults.addExtraLib(
+                //             dts,
+                //             'file:///node_modules/@types/@playwright/test/index.d.ts'
+                //         );
+                //     });
 
-                fetch('https://unpkg.com/@types/react-dom/index.d.ts')
-                    .then((response) => response.text())
-                    .then((dts) => {
-                        monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                            dts,
-                            'file:///node_modules/@types/react-dom/index.d.ts'
-                        );
-                    });
+                // fetch('https://unpkg.com/@types/react-dom/index.d.ts')
+                //     .then((response) => response.text())
+                //     .then((dts) => {
+                //         monaco.languages.typescript.typescriptDefaults.addExtraLib(
+                //             dts,
+                //             'file:///node_modules/@types/react-dom/index.d.ts'
+                //         );
+                //     });
 
-                // Create a unique URI for the model
-                const uri = monaco.Uri.parse(`file:///main.ts`); // Example URI
+                const uri = monaco.Uri.parse(`file:///main.tsx`); // Example URI
 
-                // Create the model with the URI
                 model = monaco.editor.createModel(this.el.dataset.content, language, uri);
 
                 monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -93,9 +91,8 @@ export default {
                 this.pushEvent('update_editor_state', { changes: e.changes, full_value: this.editor.getValue() });
             });
 
-            this.userCursors = {}; // Store other users' cursor decorations
+            this.userCursors = {};
 
-            // Listen for cursor position changes and send to LiveView
             this.editor.onDidChangeCursorPosition(({ position }) => {
                 this.pushEvent('cursor_position_change', {
                     lineNumber: position.lineNumber,
@@ -103,7 +100,6 @@ export default {
                 });
             });
 
-            // Listen for incoming changes from LiveView
             this.handleEvent('apply_changes', (payload) => {
                 const changes = payload.changes.map((change) => ({
                     range: new monaco.Range(
@@ -116,10 +112,8 @@ export default {
                     forceMoveMarkers: true,
                 }));
 
-                // Apply the changes to the editor without a full text refresh
                 this.isRemoteUpdate = true;
                 this.editor.getModel().pushEditOperations(this.editor.getSelections(), changes, () => null);
-                // this.editor.executeEdits('remote', changes);
                 this.isRemoteUpdate = false;
             });
 
