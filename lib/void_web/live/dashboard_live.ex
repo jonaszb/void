@@ -11,7 +11,7 @@ defmodule VoidWeb.DashboardLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-4xl">
+    <div class="mx-auto max-w-4xl px-4 pb-8 pt-28 md:pb-20 md:pt-40 sm:px-6 lg:px-8">
       <h1 class="font-work text-2xl -translate-y-4 md:-translate-y-12 font-bold text-blue-950 dark:text-blue-50 uppercase tracking-wider">
         Dashboard
       </h1>

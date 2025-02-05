@@ -79,7 +79,8 @@ defmodule VoidWeb.Room.RoomComponents do
     ~H"""
     <section class="p-4 h-full grid grid-rows-[1fr,min-content] grid-cols-1 justify-between text-sm">
       <ul
-        class="flex flex-col-reverse overflow-scroll gap-1 p-4 flex-grow rounded bg-zinc-100 dark:bg-zinc-800 shadow-inner h-full scroll-smooth"
+        class="flex flex-col-reverse overflow-scroll gap-1 p-4 flex-grow rounded bg-zinc-100 dark:bg-zinc-800 shadow-inner h-full scroll-smooth scroll-"
+        style="scrollbar-width: none"
         id="msg-container"
         phx-hook="FormatTimestampsHook"
       >

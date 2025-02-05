@@ -88,7 +88,7 @@ defmodule VoidWeb do
       import VoidWeb.Gettext
       import VoidWeb.ThemeToggle
       import VoidWeb.Logos
-      import VoidWeb.Testimonial
+      import VoidWeb.HomePageComponents
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

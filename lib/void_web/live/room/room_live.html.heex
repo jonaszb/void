@@ -7,10 +7,10 @@
   ]}
 >
   <div class="hidden" id="settings" phx-hook="AudioMp3" data-sounds={@sounds}></div>
-  <header class="flex px-2 md:px-4 justify-between font-work relative">
+  <header class="flex px-2 md:px-4 justify-between font-work relative @container">
     <div class="flex gap-4 items-center ">
       <.logo_round class="w-12" />
-      <h1 class="hidden sm:block text-lg truncate max-w-xs lg:max-w-lg">
+      <h1 class="hidden @lg:block text-lg truncate max-w-44 @3xl:max-w-lg">
         <%= @room_state.name %>
       </h1>
     </div>
