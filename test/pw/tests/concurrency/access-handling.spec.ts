@@ -48,7 +48,7 @@ test.describe.parallel('Room concurrency tests - access handling', () => {
 
     test('Owner can remove users from the room', async ({ twoUserRoom: { page, altPage } }) => {
         await page.userActions.selectRoomTab('Settings');
-        await page.getByRole('button', { name: 'Manage users' }).click();
+        await page.getByRole('button', { name: 'Users' }).click();
         await page.getByRole('button', { name: 'Remove user' }).click();
         await page.getByRole('button', { name: 'Close' }).click();
         await expect(altPage).toHaveURL(/access_denied/);
