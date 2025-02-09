@@ -64,7 +64,7 @@
       message_counter={@message_counter}
       users_counter={@users_counter}
     />
-    <div class="hidden @[200px]:block h-[calc(100vh-100px)]">
+    <div class="hidden @[200px]:block h-[calc(100vh-100px)] overflow-hidden">
       <.users_section
         :if={@active_tab == :users}
         room_users={@room_users}

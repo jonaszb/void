@@ -43,11 +43,11 @@ defmodule VoidWeb.HomePageComponents do
 
   def slogan(assigns) do
     ~H"""
-    <div class="text-left max-w-sm even:self-end mx-2">
+    <div class="text-left max-w-sm mx-2">
       <p class="font-bold text-lg text-amber-800 dark:text-amber-300">
         <%= render_slot(@title) %>
       </p>
-      <p class="mt-4 text-slate-700 dark:text-slate-100">
+      <p class="mt-1 sm:mt-4 text-slate-700 dark:text-slate-100">
         <%= render_slot(@description) %>
       </p>
     </div>

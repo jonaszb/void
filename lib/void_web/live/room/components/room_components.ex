@@ -14,7 +14,11 @@ defmodule VoidWeb.Room.RoomComponents do
 
   def nav_menu(assigns) do
     ~H"""
-    <nav id="sidebar-tabs" role="tablist" class="@[200px]:border-b-2 border-zinc-500/50">
+    <nav
+      id="sidebar-tabs"
+      role="tablist"
+      class="@[200px]:border-b-2 border-zinc-500/50 overflow-hidden"
+    >
       <ul class="grid @[200px]:grid-flow-col">
         <.nav_menu_item
           name="hero-chat-bubble-left-right"
