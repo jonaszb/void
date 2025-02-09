@@ -76,14 +76,14 @@ defmodule VoidWeb.Room.AccessControlModal do
                 </span>
               </div>
               <div class="flex gap-2 items-center">
-                <.form phx-change="set_role" phx-value-id={ru.id}>
+                <form phx-change="set_role" phx-value-id={ru.id}>
                   <.dropdown
                     id={"role-dd-#{ru.id}"}
                     name="role"
                     options={[{"Editor", "Editor"}, {"Viewer", "Viewer"}]}
                     value={role}
                   />
-                </.form>
+                </form>
               </div>
             </div>
             <button

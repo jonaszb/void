@@ -15,7 +15,7 @@
       </h1>
     </div>
     <div class="flex gap-2 items-center">
-      <.form phx-change="change_language">
+      <form phx-change="change_language">
         <.dropdown
           aria-label="Language"
           name="language"
@@ -24,7 +24,7 @@
           class="text-right"
           disabled={not @room_user.is_editor}
         />
-      </.form>
+      </form>
       <.action_bar room_user={@room_user} muted={@muted} />
       <span class="flex items-center ml-4">
         <.link href={~p"/"} title="Exit room">

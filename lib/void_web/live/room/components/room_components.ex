@@ -397,6 +397,7 @@ defmodule VoidWeb.Room.RoomComponents do
   end
 
   attr :room_user, :map, required: true
+  attr :muted, :boolean, default: true
 
   def action_bar(assigns) do
     ~H"""
